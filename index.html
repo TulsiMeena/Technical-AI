@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical AI - Amit Meena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.2); border-radius: 10px; }
+        .nav-link.active { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-left: 3px solid #3b82f6; }
+        .message-anim { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Themes */
+        .theme-slate { --bg-main: #020617; --bg-side: #0f172a; --bg-chat: #020617; --border: #1e293b; }
+        .theme-zinc { --bg-main: #09090b; --bg-side: #18181b; --bg-chat: #09090b; --border: #27272a; }
+        .theme-rose { --bg-main: #1c0a0a; --bg-side: #2d1616; --bg-chat: #1c0a0a; --border: #451a1a; }
+        .theme-blue { --bg-main: #081229; --bg-side: #0c1a3b; --bg-chat: #081229; --border: #1e3a8a; }
+
+        body.theme-slate { background-color: var(--bg-main); }
+        .sidebar { background-color: var(--bg-side); border-color: var(--border); }
+        .main-content { background-color: var(--bg-chat); }
+        .border-theme { border-color: var(--border); }
+
+        /* Floating Input Improvement */
+        #page-chat { position: relative; }
+        .input-container { 
+            position: sticky; 
+            bottom: 0; 
+            padding-bottom: 2rem;
+            z-index: 10;
+        }
+        .input-blur {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: linear-gradient(to top, var(--bg-main) 40%, transparent);
+            pointer-events: none;
+        }
+
+        /* Smooth button hover effects */
+        .btn-smooth { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-smooth:hover { transform: translateY(-1px); }
+        .btn-smooth:active { transform: translateY(0); scale: 0.95; }
+    </style>
+</head>
+<body class="theme-slate text-slate-200 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-full md:w-72 border-r flex flex-col shrink-0">
+        <div class="p-6 border-b border-theme flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-robot text-xl text-white"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Technical AI</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="shareWebsite()" class="text-slate-400 hover:text-blue-500 transition-colors p-2" title="Share Website">
+                    <i class="fas fa-share-nodes text-lg"></i>
+                </button>
+                <button onclick="createNewChat()" class="text-slate-400 hover:text-white transition-colors p-2" title="New Chat">
+                    <i class="fas fa-plus-square text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
+            <div>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3">History</h3>
+                <div id="chat-history-list" class="space-y-1">
+                    <!-- History items injected here -->
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-theme">
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3">Navigation</h3>
+                <button onclick="showPage('chat')" id="nav-chat" class="nav-link active w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                    <i class="fas fa-comment-alt w-5"></i>
+                    <span class="font-medium">Current Chat</span>
+                </button>
+                <button onclick="showPage('about')" id="nav-about" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="font-medium">About Me</span>
+                </button>
+                <button onclick="showPage('privacy')" id="nav-privacy" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span class="font-medium">Privacy Policy</span>
+                </button>
+                <button onclick="showPage('contact')" id="nav-contact" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                    <i class="fas fa-envelope w-5"></i>
+                    <span class="font-medium">Contact Us</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="p-6 border-t border-theme space-y-4">
+            <!-- Theme Switcher -->
+            <div class="flex justify-between items-center bg-black/20 p-2 rounded-xl">
+                <button onclick="setTheme('slate')" class="w-6 h-6 rounded-full bg-slate-800 border border-slate-600" title="Slate"></button>
+                <button onclick="setTheme('zinc')" class="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-600" title="Zinc"></button>
+                <button onclick="setTheme('blue')" class="w-6 h-6 rounded-full bg-blue-900 border border-blue-700" title="Blue"></button>
+                <button onclick="setTheme('rose')" class="w-6 h-6 rounded-full bg-rose-900 border border-rose-700" title="Rose"></button>
+            </div>
+            <div class="flex items-center space-x-3 p-2">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-theme">
+                    <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Amit%20meena.jpg" alt="Amit" class="w-full h-full object-cover">
+                </div>
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Amit Meena</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content flex-1 flex flex-col relative h-full">
+        
+        <!-- Chat Page -->
+        <div id="page-chat" class="page-content flex flex-col h-full">
+            <header class="p-4 border-b border-theme flex justify-between items-center backdrop-blur-md">
+                <div class="flex items-center space-x-3">
+                    <h2 id="current-chat-title" class="font-semibold text-sm">New Chat</h2>
+                    <button onclick="renameCurrentChat()" class="text-slate-500 hover:text-white text-xs">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex bg-slate-800 rounded-lg p-1 border border-theme">
+                        <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider">EN</button>
+                        <button onclick="setLanguage('hi')" id="lang-hi" class="px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider">HI</button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-xs text-slate-400">System Ready</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar scroll-smooth">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <!-- Input Bar -->
+            <div class="input-container px-4 md:px-8">
+                <div class="input-blur"></div>
+                <div class="max-w-3xl mx-auto relative z-10">
+                    <form id="chat-form" class="relative group">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 z-20">
+                            <button type="button" id="voice-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <label for="image-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer">
+                                <i class="fas fa-image"></i>
+                                <input type="file" id="image-upload" accept="image/*" class="hidden">
+                            </label>
+                        </div>
+                        <input type="text" id="user-input" autocomplete="off"
+                            placeholder="Ask Amit AI anything..."
+                            class="w-full bg-slate-900/80 backdrop-blur-xl border border-theme rounded-2xl py-4 pl-24 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all text-slate-100 shadow-2xl relative z-10">
+                        <button type="submit" 
+                            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 z-20">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </form>
+                    <p class="text-center text-[10px] text-slate-600 mt-4 uppercase tracking-tighter">Powered by GPT-4o Mini • Amit Meena AI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Page -->
+        <div id="page-about" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-12">
+                <div class="text-center space-y-4">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight">About Me</h1>
+                    <p class="text-slate-400 text-lg">Developer, Creator & AI Enthusiast</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-6">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Personal Profile</h3>
+                            <p class="text-slate-300 leading-relaxed">
+                                Namaste! Main Amit Meena hoon. I'm a passionate developer focused on building modern web experiences and AI integrations. 
+                                Based in Jaipur, Karauli, India.
+                            </p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Amit%20meena.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-lg transform hover:scale-105 transition-transform" alt="Amit Meena">
+                                <img src="https://raw.githubusercontent.com/TulsiMeena/Photo-/main/Amit%20tatu.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-lg transform hover:scale-105 transition-transform" alt="Amit Tatu">
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-4">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Technical 01</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">
+                                <span class="text-blue-400 font-bold">Technical 01</span> ek aesa channel hai jahan Amazon ke latest projects aur deals ki links directly WhatsApp channel pe milti hain. Isse <span class="text-white font-medium">Aman Meena</span> run karte hain, aur unke brother <span class="text-white font-medium">Amit Meena</span> (Developer) is platform ko support karte hain.
+                            </p>
+                            <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Technical_01.jpg" class="w-full h-40 object-cover rounded-2xl border border-theme shadow-md" alt="Technical 01">
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-6">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Lifestyle</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman1.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 1">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman3.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 3">
+                            </div>
+                            <p class="text-sm text-slate-400">Capturing moments and exploring new technologies every day.</p>
+                        </div>
+
+                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-4">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Quick Links</h3>
+                            <div class="flex gap-4">
+                                <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="flex-1 p-4 bg-slate-800 rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-pink-600/20 transition-all">
+                                    <i class="fab fa-instagram text-2xl text-pink-500 mb-2"></i>
+                                    <span class="text-xs font-bold uppercase tracking-widest">Follow</span>
+                                </a>
+                                <a href="https://whatsapp.com/channel/0029VaDFCbF9hXFDBUx8fe3E" target="_blank" class="flex-1 p-4 bg-slate-800 rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-green-600/20 transition-all">
+                                    <i class="fab fa-whatsapp text-2xl text-green-500 mb-2"></i>
+                                    <span class="text-xs font-bold uppercase tracking-widest">Join</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="page-contact" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-12">
+                <div class="text-center space-y-4">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight">Contact Us</h1>
+                    <p class="text-slate-400 text-lg">Let's connect and build something great together.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Contact Info -->
+                    <div class="space-y-6">
+                        <div class="p-8 bg-slate-900 rounded-3xl border border-theme space-y-8">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Direct Channels</h3>
+                            
+                            <div class="space-y-6">
+                                <a href="tel:8696434884" class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Call Me</p>
+                                        <p class="text-slate-200 font-medium">+91 8696434884</p>
+                                    </div>
+                                </a>
+
+                                <a href="mailto:Xemoh1950t@proton.me" class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Email Me</p>
+                                        <p class="text-slate-200 font-medium">Xemoh1950t@proton.me</p>
+                                    </div>
+                                </a>
+
+                                <div class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                                        <i class="fas fa-location-dot"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Location</p>
+                                        <p class="text-slate-200 font-medium">Jaipur, Karauli, India</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instagram Specific -->
+                        <div class="p-8 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-3xl border border-pink-500/20 space-y-6">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs uppercase tracking-widest text-pink-400 font-bold">Instagram Feed</h3>
+                                <i class="fab fa-instagram text-2xl text-pink-500"></i>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Aman.jpg" class="w-16 h-16 rounded-2xl object-cover border-2 border-pink-500" alt="Instagram Profile">
+                                <div>
+                                    <p class="text-white font-bold">@_technical_01</p>
+                                    <p class="text-xs text-slate-400">Digital Creator & Developer</p>
+                                </div>
+                            </div>
+                            <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="block w-full py-4 bg-pink-600 text-white rounded-2xl text-center font-bold shadow-lg shadow-pink-900/40 hover:bg-pink-500 transition-all">
+                                Follow on Instagram
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Contact Form Mock -->
+                    <div class="p-8 bg-slate-900 rounded-3xl border border-theme space-y-6">
+                        <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Send a Message</h3>
+                        <form class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Full Name</label>
+                                <input type="text" placeholder="John Doe" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Email Address</label>
+                                <input type="email" placeholder="john@example.com" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Message</label>
+                                <textarea rows="4" placeholder="How can I help you?" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all"></textarea>
+                            </div>
+                            <button type="button" onclick="alert('Message sent! (Simulation)')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all">
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Page -->
+        <div id="page-privacy" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-8">
+                <h1 class="text-4xl font-bold text-white">Privacy Policy</h1>
+                <div class="space-y-6 text-slate-400">
+                    <p>Your privacy is important to us. Here's how we handle your data:</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Data Collection:</span> We only collect messages to provide AI responses.</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Storage:</span> We do not store your personal identity data.</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Third Parties:</span> Data is sent securely to ChatAnywhere API.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js?v=2"></script>
+</body>
+</html>
