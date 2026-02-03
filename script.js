@@ -12,21 +12,65 @@ let chats = JSON.parse(localStorage.getItem('amit_ai_chats')) || {};
 let currentTheme = localStorage.getItem('amit_ai_theme') || 'slate';
 let currentLanguage = localStorage.getItem('amit_ai_lang') || 'en';
 
+const TRANSLATIONS = {
+    en: {
+        history: "History",
+        navigation: "Navigation",
+        nav_chat: "Current Chat",
+        nav_about: "About Me",
+        nav_privacy: "Privacy Policy",
+        nav_contact: "Contact Us",
+        system_ready: "System Ready",
+        input_placeholder: "Ask Amit AI anything...",
+        footer: "Powered by GPT-4o Mini • Amit Meena AI",
+        code_studio: "Code Studio",
+        run_code: "Run",
+        close: "Close"
+    },
+    hi: {
+        history: "इतिहास (History)",
+        navigation: "नेविगेशन (Navigation)",
+        nav_chat: "वर्तमान चैट (Chat)",
+        nav_about: "मेरे बारे में (About)",
+        nav_privacy: "गोपनीयता नीति (Privacy)",
+        nav_contact: "संपर्क करें (Contact)",
+        system_ready: "सिस्टम तैयार है",
+        input_placeholder: "अमित एआई से कुछ भी पूछें...",
+        footer: "GPT-4o Mini द्वारा संचालित • अमित मीना AI",
+        code_studio: "कोड स्टूडियो (Code Studio)",
+        run_code: "चलाएं (Run)",
+        close: "बंद करें (Close)"
+    }
+};
+
 // --- Language Logic ---
 function setLanguage(lang) {
     currentLanguage = lang;
     localStorage.setItem('amit_ai_lang', lang);
     
-    // Update UI
+    // Update Text Content
+    const t = TRANSLATIONS[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) el.innerText = t[key];
+    });
+
+    // Update Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) el.placeholder = t[key];
+    });
+
+    // Update Buttons UI
     const btnEn = document.getElementById('lang-en');
     const btnHi = document.getElementById('lang-hi');
     
     if (lang === 'en') {
-        btnEn.className = "px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider";
-        btnHi.className = "px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider";
+        btnEn.className = "px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider btn-smokey";
+        btnHi.className = "px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider hover:bg-slate-700";
     } else {
-        btnHi.className = "px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider";
-        btnEn.className = "px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider";
+        btnHi.className = "px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider btn-smokey";
+        btnEn.className = "px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider hover:bg-slate-700";
     }
 }
 
@@ -38,12 +82,61 @@ function setTheme(theme) {
 
 // --- Navigation Logic ---
 function showPage(pageId) {
-    document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
-    document.getElementById(`page-${pageId}`).classList.remove('hidden');
+    // If opening Code Studio, handle flex specifically
+    const codePage = document.getElementById('page-code-studio');
+    const chatPage = document.getElementById('page-chat');
+
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.add('hidden');
+        page.classList.remove('flex'); // Remove flex from all initially
+    });
+
+    const target = document.getElementById(`page-${pageId}`);
+    target.classList.remove('hidden');
+    if (pageId === 'code-studio' || pageId === 'chat') {
+        target.classList.add('flex'); // Restore flex for layout
+    }
     
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     const activeLink = document.getElementById(`nav-${pageId}`);
     if(activeLink) activeLink.classList.add('active');
+}
+
+// --- Code Studio Logic ---
+function openCodeStudio(code = '') {
+    const editor = document.getElementById('code-editor');
+    if (code) {
+        editor.value = code;
+        runCode(); // Auto run
+    }
+    showPage('code-studio');
+}
+
+function runCode() {
+    const code = document.getElementById('code-editor').value;
+    const preview = document.getElementById('code-preview');
+    const doc = preview.contentDocument || preview.contentWindow.document;
+
+    doc.open();
+    doc.write(code);
+    doc.close();
+}
+
+function extractAndRunCode(btn) {
+    // Find the message content div
+    const contentDiv = btn.closest('.group').querySelector('.message-content');
+    const fullText = contentDiv.innerText;
+
+    // Simple regex to find code blocks.
+    // Prioritize HTML/CSS/JS, but fallback to any block
+    const codeBlockRegex = /```(?:html|css|js|javascript)?\n([\s\S]*?)```/i;
+    const match = fullText.match(codeBlockRegex);
+
+    if (match && match[1]) {
+        openCodeStudio(match[1].trim());
+    } else {
+        alert("No valid code block found to run.");
+    }
 }
 
 // --- Chat History Logic ---
@@ -340,11 +433,19 @@ function injectMessage(text, isUser = false, save = true) {
 
     let actionsHtml = '';
     if (!isUser) {
+        const hasCode = text.includes('```');
+        const codeBtn = hasCode ? `
+            <button onclick="extractAndRunCode(this)" class="text-[10px] text-slate-500 hover:text-green-400 flex items-center space-x-1">
+                <i class="fas fa-code"></i> <span>Run Code</span>
+            </button>
+        ` : '';
+
         actionsHtml = `
             <div class="flex items-center space-x-3 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onclick="copyToClipboard(this)" class="text-[10px] text-slate-500 hover:text-blue-400 flex items-center space-x-1">
                     <i class="fas fa-copy"></i> <span>Copy</span>
                 </button>
+                ${codeBtn}
                 <button onclick="shareResponse('${text.replace(/'/g, "\\'")}')" class="text-[10px] text-slate-500 hover:text-blue-400 flex items-center space-x-1">
                     <i class="fas fa-share-alt"></i> <span>Share</span>
                 </button>
@@ -382,13 +483,34 @@ function injectMessage(text, isUser = false, save = true) {
         `;
     }
 
+    // Format text (Basic Markdown for Code Blocks)
+    let formattedText = text;
+
+    // Split by code blocks
+    const parts = text.split(/(```[\s\S]*?```)/g);
+    formattedText = parts.map(part => {
+        if (part.startsWith('```')) {
+            // It's a code block
+            const match = part.match(/```(\w*)\n?([\s\S]*?)```/);
+            if (match) {
+                const lang = match[1] || 'plaintext';
+                const code = match[2];
+                return `<pre><code class="language-${lang} text-xs sm:text-sm custom-scrollbar rounded-lg my-2">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+            }
+            return part;
+        } else {
+            // Regular text
+            return part.replace(/\n/g, '<br>');
+        }
+    }).join('');
+
     messageDiv.innerHTML = `
         <div class="w-8 h-8 rounded bg-opacity-90 ${iconBg} flex items-center justify-center shrink-0 shadow-lg">
             <i class="fas ${icon} text-xs text-white"></i>
         </div>
         <div class="flex-1 group">
             <div class="prose prose-invert max-w-none text-slate-300 leading-relaxed message-content bg-white/5 p-4 rounded-2xl border border-white/5">
-                ${text.replace(/\n/g, '<br>')}
+                ${formattedText}
                 ${specialContent}
             </div>
             ${actionsHtml}
@@ -396,6 +518,13 @@ function injectMessage(text, isUser = false, save = true) {
     `;
     
     messagesContainer.appendChild(messageDiv);
+
+    // Apply highlighting
+    if (window.hljs) {
+        messageDiv.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+    }
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
@@ -425,6 +554,34 @@ function toggleLike(btn) {
     } else {
         icon.className = 'far fa-heart';
     }
+}
+
+// --- Image Generation ---
+function generateImage(prompt) {
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}`;
+
+    const container = document.createElement('div');
+    container.className = "max-w-3xl mx-auto flex space-x-4 message-anim";
+    container.innerHTML = `
+        <div class="w-8 h-8 rounded bg-opacity-90 bg-blue-600 flex items-center justify-center shrink-0 shadow-lg">
+            <i class="fas fa-paint-brush text-xs text-white"></i>
+        </div>
+        <div class="flex-1">
+            <div class="bg-white/5 p-2 rounded-2xl border border-white/5 inline-block">
+                <img src="${imageUrl}" alt="${prompt}" class="rounded-xl shadow-lg max-w-full md:max-w-sm h-auto" loading="lazy">
+                <div class="flex justify-between items-center mt-2 px-1">
+                    <span class="text-xs text-slate-400 italic truncate w-48">${prompt}</span>
+                    <a href="${imageUrl}" download="generated-image.jpg" target="_blank" class="text-xs text-blue-400 hover:text-white transition-colors">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('chat-messages').appendChild(container);
+    document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
 }
 
 // --- API Integration ---
@@ -483,23 +640,62 @@ async function fetchAIResponse(message, imageBase64 = null) {
     }
 }
 
+// --- PDF & File Logic ---
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function readPDF(file) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += `\n--- Page ${i} ---\n${pageText}`;
+        }
+        return fullText;
+    } catch (e) {
+        console.error("PDF Error:", e);
+        return null;
+    }
+}
+
 // --- Event Listeners ---
 const chatFormElement = document.getElementById('chat-form');
 const voiceBtn = document.getElementById('voice-btn');
-const imageUpload = document.getElementById('image-upload');
-let pendingImage = null; // To store uploaded image base64
+const fileUpload = document.getElementById('file-upload');
+let pendingAttachment = null; // Stores { type: 'image'|'text', content: ... }
 
-if (imageUpload) {
-    imageUpload.addEventListener('change', (e) => {
+if (fileUpload) {
+    fileUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (!file) return;
+
+        injectMessage(`[Uploading: ${file.name}...]`, true);
+
+        if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                pendingImage = e.target.result;
-                injectMessage(`[Image Uploaded: ${file.name}]`, true);
-                injectMessage("Image ready. Ask your question about it!", false);
+                pendingAttachment = { type: 'image', content: e.target.result };
+                injectMessage("Image ready. Ask me about it!", false);
             };
             reader.readAsDataURL(file);
+        }
+        else if (file.type === 'application/pdf') {
+            const text = await readPDF(file);
+            if (text) {
+                pendingAttachment = { type: 'text', content: text, name: file.name };
+                injectMessage("PDF loaded successfully. You can ask questions about its content.", false);
+            } else {
+                injectMessage("Failed to read PDF.", false);
+            }
+        }
+        else if (file.type === 'text/plain') {
+            const text = await file.text();
+            pendingAttachment = { type: 'text', content: text, name: file.name };
+            injectMessage("Text file loaded.", false);
         }
     });
 }
@@ -538,30 +734,54 @@ if (chatFormElement) {
         e.preventDefault();
         const input = document.getElementById('user-input');
         let message = input.value.trim();
-        if (!message && !isCameraActive && !pendingImage) return;
 
-        // If message is empty but we have an image, provide a default
-        if (!message && (isCameraActive || pendingImage)) {
-            message = "What do you see in this image?";
+        // Check if we have anything to send
+        if (!message && !isCameraActive && !pendingAttachment) return;
+
+        // Handle "Image Generation" commands specifically
+        if (message.toLowerCase().startsWith('/image') || message.toLowerCase().startsWith('generate image')) {
+            const prompt = message.replace(/^\/image|generate image/i, '').trim();
+            if (prompt) {
+                injectMessage(message, true);
+                input.value = '';
+                generateImage(prompt); // Call image generation
+                return;
+            }
         }
 
-        let imageToSend = pendingImage;
+        // Handle File Content Injection (PDF/Text)
+        if (pendingAttachment && pendingAttachment.type === 'text') {
+            message = `[Context from file ${pendingAttachment.name}]:\n${pendingAttachment.content}\n\nUser Question: ${message}`;
+        }
 
-        // If camera is active, capture frame (overrides uploaded image for now, or we could handle both)
+        // Handle Images
+        let imageToSend = null;
+        if (pendingAttachment && pendingAttachment.type === 'image') {
+            imageToSend = pendingAttachment.content;
+        }
+
+        // Camera overrides upload
         if (isCameraActive) {
             imageToSend = captureFrame();
-            // Optional: Show a thumbnail of the captured frame in chat
             injectMessage(`<img src="${imageToSend}" class="w-32 h-24 object-cover rounded-lg border border-white/20 mb-2"><br>${message}`, true);
         } else {
-             injectMessage(message, true);
+             // For user display, we don't show the massive PDF text, just the question
+             // But if it's just text, we show it.
+             // If we appended file context, strip it for the UI log to keep it clean?
+             // Nah, let's just log the user input for now or short version.
+             // Actually, showing the full context might spam the chat.
+             // Let's just show the original input value in the chat bubble.
+             injectMessage(input.value.trim() || "(Sending attachment data...)", true);
         }
 
+        const rawInput = input.value; // Store for restore if failed? No need.
         input.value = '';
-        pendingImage = null; // Reset pending image
-        // Reset file input value so same file can be selected again
-        if(imageUpload) imageUpload.value = '';
 
-        synth.cancel(); // Kisi bhi purane response ko roke
+        // Reset state
+        pendingAttachment = null;
+        if(fileUpload) fileUpload.value = '';
+
+        synth.cancel();
         
         // Typing indicator
         const messagesContainer = document.getElementById('chat-messages');

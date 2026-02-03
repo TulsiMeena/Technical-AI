@@ -6,6 +6,11 @@
     <title>_Technical_01 AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
@@ -147,29 +152,29 @@
         
         <nav class="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
             <div>
-                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3">History</h3>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3" data-i18n="history">History</h3>
                 <div id="chat-history-list" class="space-y-1">
                     <!-- History items injected here -->
                 </div>
             </div>
 
             <div class="pt-4 border-t border-theme">
-                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3">Navigation</h3>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3" data-i18n="navigation">Navigation</h3>
                 <button onclick="showPage('chat')" id="nav-chat" class="nav-link active w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-comment-alt w-5"></i>
-                    <span class="font-medium">Current Chat</span>
+                    <span class="font-medium" data-i18n="nav_chat">Current Chat</span>
                 </button>
                 <button onclick="showPage('about')" id="nav-about" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-user w-5"></i>
-                    <span class="font-medium">About Me</span>
+                    <span class="font-medium" data-i18n="nav_about">About Me</span>
                 </button>
                 <button onclick="showPage('privacy')" id="nav-privacy" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-shield-alt w-5"></i>
-                    <span class="font-medium">Privacy Policy</span>
+                    <span class="font-medium" data-i18n="nav_privacy">Privacy Policy</span>
                 </button>
                 <button onclick="showPage('contact')" id="nav-contact" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-envelope w-5"></i>
-                    <span class="font-medium">Contact Us</span>
+                    <span class="font-medium" data-i18n="nav_contact">Contact Us</span>
                 </button>
             </div>
         </nav>
@@ -194,6 +199,33 @@
     <!-- Main Content Area -->
     <main class="main-content flex-1 flex flex-col relative h-full">
         
+        <!-- Code Studio Page -->
+        <div id="page-code-studio" class="page-content hidden flex-col h-full p-4 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold neon-text" data-i18n="code_studio">Code Studio</h2>
+                <div class="flex space-x-2">
+                    <button onclick="runCode()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all btn-smokey">
+                        <i class="fas fa-play mr-2"></i> <span data-i18n="run_code">Run</span>
+                    </button>
+                    <button onclick="showPage('chat')" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-all btn-smokey">
+                        <i class="fas fa-times mr-2"></i> <span data-i18n="close">Close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
+                <!-- Editor -->
+                <div class="flex-1 flex flex-col glass-morphism rounded-xl border border-theme overflow-hidden">
+                    <div class="bg-black/40 p-2 text-xs text-slate-400 font-mono border-b border-white/5">HTML / CSS / JS</div>
+                    <textarea id="code-editor" class="flex-1 bg-transparent p-4 font-mono text-sm text-blue-300 focus:outline-none resize-none" spellcheck="false" placeholder="// Write your code here..."></textarea>
+                </div>
+                <!-- Preview -->
+                <div class="flex-1 flex flex-col glass-morphism rounded-xl border border-theme overflow-hidden bg-white">
+                    <div class="bg-slate-900 p-2 text-xs text-slate-400 font-mono border-b border-slate-200">Live Preview</div>
+                    <iframe id="code-preview" class="flex-1 w-full h-full bg-white"></iframe>
+                </div>
+            </div>
+        </div>
+
         <!-- Chat Page -->
         <div id="page-chat" class="page-content flex flex-col h-full">
             <header class="p-4 border-b border-theme flex justify-between items-center glass-morphism z-20">
@@ -210,7 +242,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span class="text-xs text-slate-400">System Ready</span>
+                        <span class="text-xs text-slate-400" data-i18n="system_ready">System Ready</span>
                     </div>
                 </div>
             </header>
@@ -248,20 +280,21 @@
                             <button type="button" id="camera-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2 btn-smokey rounded-lg" title="Live Camera">
                                 <i class="fas fa-video"></i>
                             </button>
-                            <label for="image-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer btn-smokey rounded-lg ml-1" title="Upload Image">
-                                <i class="fas fa-image"></i>
-                                <input type="file" id="image-upload" accept="image/*" class="hidden">
+                            <label for="file-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer btn-smokey rounded-lg ml-1" title="Upload File (Image/PDF)">
+                                <i class="fas fa-paperclip"></i>
+                                <input type="file" id="file-upload" accept="image/*,application/pdf,.txt" class="hidden">
                             </label>
                         </div>
                         <input type="text" id="user-input" autocomplete="off"
                             placeholder="Ask Amit AI anything..."
+                            data-i18n-placeholder="input_placeholder"
                             class="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-2xl py-4 pl-36 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all text-slate-100 shadow-2xl relative z-10 glass-morphism placeholder-slate-500">
                         <button type="submit" 
                             class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 z-20 btn-smokey">
                             <i class="fas fa-arrow-up"></i>
                         </button>
                     </form>
-                    <p class="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-tighter neon-text">Powered by GPT-4o Mini • Amit Meena AI</p>
+                    <p class="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-tighter neon-text" data-i18n="footer">Powered by GPT-4o Mini • Amit Meena AI</p>
                 </div>
             </div>
         </div>
