@@ -49,24 +49,97 @@
         .btn-smooth { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-smooth:hover { transform: translateY(-1px); }
         .btn-smooth:active { transform: translateY(0); scale: 0.95; }
+
+        /* Message Bubbles Overrides */
+        .message-content {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .message-content:hover {
+            transform: scale(1.01);
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* ULTRA ADVANCED STYLES */
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-smokey {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0);
+        }
+
+        .btn-smokey:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px) scale(1.02);
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-smokey::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            opacity: 0;
+        }
+
+        .btn-smokey:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 1;
+            transition: 0s;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1), 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .anim-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
     </style>
 </head>
 <body class="theme-slate text-slate-200 h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="sidebar w-full md:w-72 border-r flex flex-col shrink-0">
+    <aside class="sidebar w-full md:w-72 border-r flex flex-col shrink-0 glass-morphism z-20">
         <div class="p-6 border-b border-theme flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 anim-float">
                     <i class="fas fa-robot text-xl text-white"></i>
                 </div>
-                <span class="font-bold text-lg tracking-tight">Technical AI</span>
+                <span class="font-bold text-lg tracking-tight neon-text">Technical AI</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button onclick="shareWebsite()" class="text-slate-400 hover:text-blue-500 transition-colors p-2" title="Share Website">
+                <button onclick="shareWebsite()" class="text-slate-400 hover:text-blue-500 transition-colors p-2 btn-smokey rounded-lg" title="Share Website">
                     <i class="fas fa-share-nodes text-lg"></i>
                 </button>
-                <button onclick="createNewChat()" class="text-slate-400 hover:text-white transition-colors p-2" title="New Chat">
+                <button onclick="createNewChat()" class="text-slate-400 hover:text-white transition-colors p-2 btn-smokey rounded-lg" title="New Chat">
                     <i class="fas fa-plus-square text-xl"></i>
                 </button>
             </div>
@@ -82,19 +155,19 @@
 
             <div class="pt-4 border-t border-theme">
                 <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3">Navigation</h3>
-                <button onclick="showPage('chat')" id="nav-chat" class="nav-link active w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                <button onclick="showPage('chat')" id="nav-chat" class="nav-link active w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-comment-alt w-5"></i>
                     <span class="font-medium">Current Chat</span>
                 </button>
-                <button onclick="showPage('about')" id="nav-about" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                <button onclick="showPage('about')" id="nav-about" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-user w-5"></i>
                     <span class="font-medium">About Me</span>
                 </button>
-                <button onclick="showPage('privacy')" id="nav-privacy" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                <button onclick="showPage('privacy')" id="nav-privacy" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-shield-alt w-5"></i>
                     <span class="font-medium">Privacy Policy</span>
                 </button>
-                <button onclick="showPage('contact')" id="nav-contact" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all hover:bg-white/5 text-slate-400">
+                <button onclick="showPage('contact')" id="nav-contact" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
                     <i class="fas fa-envelope w-5"></i>
                     <span class="font-medium">Contact Us</span>
                 </button>
@@ -123,17 +196,17 @@
         
         <!-- Chat Page -->
         <div id="page-chat" class="page-content flex flex-col h-full">
-            <header class="p-4 border-b border-theme flex justify-between items-center backdrop-blur-md">
+            <header class="p-4 border-b border-theme flex justify-between items-center glass-morphism z-20">
                 <div class="flex items-center space-x-3">
-                    <h2 id="current-chat-title" class="font-semibold text-sm">New Chat</h2>
-                    <button onclick="renameCurrentChat()" class="text-slate-500 hover:text-white text-xs">
+                    <h2 id="current-chat-title" class="font-semibold text-sm neon-text">New Chat</h2>
+                    <button onclick="renameCurrentChat()" class="text-slate-500 hover:text-white text-xs btn-smokey p-2 rounded-lg">
                         <i class="fas fa-edit"></i>
                     </button>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="flex bg-slate-800 rounded-lg p-1 border border-theme">
-                        <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider">EN</button>
-                        <button onclick="setLanguage('hi')" id="lang-hi" class="px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider">HI</button>
+                    <div class="flex bg-slate-800 rounded-lg p-1 border border-theme glass-morphism">
+                        <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider btn-smokey">EN</button>
+                        <button onclick="setLanguage('hi')" id="lang-hi" class="px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider hover:bg-slate-700">HI</button>
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -152,23 +225,23 @@
                 <div class="max-w-3xl mx-auto relative z-10">
                     <form id="chat-form" class="relative group">
                         <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 z-20">
-                            <button type="button" id="voice-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2">
+                            <button type="button" id="voice-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2 btn-smokey rounded-lg">
                                 <i class="fas fa-microphone"></i>
                             </button>
-                            <label for="image-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer">
+                            <label for="image-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer btn-smokey rounded-lg ml-1">
                                 <i class="fas fa-image"></i>
                                 <input type="file" id="image-upload" accept="image/*" class="hidden">
                             </label>
                         </div>
                         <input type="text" id="user-input" autocomplete="off"
                             placeholder="Ask Amit AI anything..."
-                            class="w-full bg-slate-900/80 backdrop-blur-xl border border-theme rounded-2xl py-4 pl-24 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all text-slate-100 shadow-2xl relative z-10">
+                            class="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-2xl py-4 pl-28 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all text-slate-100 shadow-2xl relative z-10 glass-morphism placeholder-slate-500">
                         <button type="submit" 
-                            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 z-20">
+                            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 z-20 btn-smokey">
                             <i class="fas fa-arrow-up"></i>
                         </button>
                     </form>
-                    <p class="text-center text-[10px] text-slate-600 mt-4 uppercase tracking-tighter">Powered by GPT-4o Mini • Amit Meena AI</p>
+                    <p class="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-tighter neon-text">Powered by GPT-4o Mini • Amit Meena AI</p>
                 </div>
             </div>
         </div>
@@ -176,15 +249,15 @@
         <!-- About Page -->
         <div id="page-about" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
             <div class="max-w-3xl mx-auto space-y-12">
-                <div class="text-center space-y-4">
-                    <h1 class="text-5xl font-extrabold text-white tracking-tight">About Me</h1>
+                <div class="text-center space-y-4 anim-float">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight neon-text">About Me</h1>
                     <p class="text-slate-400 text-lg">Developer, Creator & AI Enthusiast</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-6">
-                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-6">
-                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Personal Profile</h3>
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Personal Profile</h3>
                             <p class="text-slate-300 leading-relaxed">
                                 Namaste! Main Amit Meena hoon. I'm a passionate developer focused on building modern web experiences and AI integrations. 
                                 Based in Jaipur, Karauli, India.
@@ -195,8 +268,8 @@
                             </div>
                         </div>
 
-                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-4">
-                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Technical 01</h3>
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Technical 01</h3>
                             <p class="text-sm text-slate-400 leading-relaxed">
                                 <span class="text-blue-400 font-bold">Technical 01</span> ek aesa channel hai jahan Amazon ke latest projects aur deals ki links directly WhatsApp channel pe milti hain. Isse <span class="text-white font-medium">Aman Meena</span> run karte hain, aur unke brother <span class="text-white font-medium">Amit Meena</span> (Developer) is platform ko support karte hain.
                             </p>
@@ -205,8 +278,8 @@
                     </div>
 
                     <div class="space-y-6">
-                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-6">
-                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Lifestyle</h3>
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Lifestyle</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman1.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 1">
                                 <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman3.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 3">
@@ -214,14 +287,14 @@
                             <p class="text-sm text-slate-400">Capturing moments and exploring new technologies every day.</p>
                         </div>
 
-                        <div class="p-6 bg-slate-900 rounded-3xl border border-theme space-y-4">
-                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Quick Links</h3>
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Quick Links</h3>
                             <div class="flex gap-4">
-                                <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="flex-1 p-4 bg-slate-800 rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-pink-600/20 transition-all">
+                                <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="flex-1 p-4 glass-morphism rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-pink-600/20 transition-all btn-smokey">
                                     <i class="fab fa-instagram text-2xl text-pink-500 mb-2"></i>
                                     <span class="text-xs font-bold uppercase tracking-widest">Follow</span>
                                 </a>
-                                <a href="https://whatsapp.com/channel/0029VaDFCbF9hXFDBUx8fe3E" target="_blank" class="flex-1 p-4 bg-slate-800 rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-green-600/20 transition-all">
+                                <a href="https://whatsapp.com/channel/0029VaDFCbF9hXFDBUx8fe3E" target="_blank" class="flex-1 p-4 glass-morphism rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-green-600/20 transition-all btn-smokey">
                                     <i class="fab fa-whatsapp text-2xl text-green-500 mb-2"></i>
                                     <span class="text-xs font-bold uppercase tracking-widest">Join</span>
                                 </a>
@@ -235,20 +308,20 @@
         <!-- Contact Page -->
         <div id="page-contact" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
             <div class="max-w-3xl mx-auto space-y-12">
-                <div class="text-center space-y-4">
-                    <h1 class="text-5xl font-extrabold text-white tracking-tight">Contact Us</h1>
+                <div class="text-center space-y-4 anim-float">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight neon-text">Contact Us</h1>
                     <p class="text-slate-400 text-lg">Let's connect and build something great together.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Contact Info -->
                     <div class="space-y-6">
-                        <div class="p-8 bg-slate-900 rounded-3xl border border-theme space-y-8">
-                            <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Direct Channels</h3>
+                        <div class="p-8 glass-morphism rounded-3xl border border-theme space-y-8 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Direct Channels</h3>
                             
                             <div class="space-y-6">
                                 <a href="tel:8696434884" class="group flex items-center space-x-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all btn-smokey">
                                         <i class="fas fa-phone"></i>
                                     </div>
                                     <div>
@@ -258,7 +331,7 @@
                                 </a>
 
                                 <a href="mailto:Xemoh1950t@proton.me" class="group flex items-center space-x-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all btn-smokey">
                                         <i class="fas fa-envelope"></i>
                                     </div>
                                     <div>
@@ -280,7 +353,7 @@
                         </div>
 
                         <!-- Instagram Specific -->
-                        <div class="p-8 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-3xl border border-pink-500/20 space-y-6">
+                        <div class="p-8 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-3xl border border-pink-500/20 space-y-6 glass-morphism">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-xs uppercase tracking-widest text-pink-400 font-bold">Instagram Feed</h3>
                                 <i class="fab fa-instagram text-2xl text-pink-500"></i>
@@ -292,29 +365,29 @@
                                     <p class="text-xs text-slate-400">Digital Creator & Developer</p>
                                 </div>
                             </div>
-                            <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="block w-full py-4 bg-pink-600 text-white rounded-2xl text-center font-bold shadow-lg shadow-pink-900/40 hover:bg-pink-500 transition-all">
+                            <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="block w-full py-4 bg-pink-600 text-white rounded-2xl text-center font-bold shadow-lg shadow-pink-900/40 hover:bg-pink-500 transition-all btn-smokey">
                                 Follow on Instagram
                             </a>
                         </div>
                     </div>
 
                     <!-- Contact Form Mock -->
-                    <div class="p-8 bg-slate-900 rounded-3xl border border-theme space-y-6">
-                        <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold">Send a Message</h3>
+                    <div class="p-8 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                        <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Send a Message</h3>
                         <form class="space-y-4">
                             <div class="space-y-2">
                                 <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Full Name</label>
-                                <input type="text" placeholder="John Doe" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all">
+                                <input type="text" placeholder="John Doe" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism">
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Email Address</label>
-                                <input type="email" placeholder="john@example.com" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all">
+                                <input type="email" placeholder="john@example.com" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism">
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Message</label>
-                                <textarea rows="4" placeholder="How can I help you?" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all"></textarea>
+                                <textarea rows="4" placeholder="How can I help you?" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism"></textarea>
                             </div>
-                            <button type="button" onclick="alert('Message sent! (Simulation)')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all">
+                            <button type="button" onclick="alert('Message sent! (Simulation)')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all btn-smokey">
                                 Send Message
                             </button>
                         </form>
@@ -326,8 +399,8 @@
         <!-- Privacy Page -->
         <div id="page-privacy" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
             <div class="max-w-3xl mx-auto space-y-8">
-                <h1 class="text-4xl font-bold text-white">Privacy Policy</h1>
-                <div class="space-y-6 text-slate-400">
+                <h1 class="text-4xl font-bold text-white neon-text anim-float">Privacy Policy</h1>
+                <div class="space-y-6 text-slate-400 glass-morphism p-8 rounded-3xl border border-theme">
                     <p>Your privacy is important to us. Here's how we handle your data:</p>
                     <div class="space-y-4">
                         <div class="flex items-start space-x-3">
