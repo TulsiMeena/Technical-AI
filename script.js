@@ -117,6 +117,72 @@ function deleteChat(id) {
     }
 }
 
+// --- Camera Logic ---
+let isCameraActive = false;
+let videoStream = null;
+
+async function startCamera() {
+    try {
+        const video = document.getElementById('camera-feed');
+        // Prefer rear camera (environment) but fallback to user
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
+        videoStream = stream;
+        video.srcObject = stream;
+
+        document.getElementById('camera-container').classList.remove('hidden');
+        document.getElementById('camera-btn').innerHTML = '<i class="fas fa-video-slash text-red-500 animate-pulse"></i>';
+        isCameraActive = true;
+
+        // Notify user
+        injectMessage("Camera activated! You can now ask me about what you see.", false, false);
+    } catch (err) {
+        console.error("Camera Error:", err);
+        alert("Could not access camera. Please check permissions.");
+    }
+}
+
+function stopCamera() {
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+
+    document.getElementById('camera-container').classList.add('hidden');
+    document.getElementById('camera-btn').innerHTML = '<i class="fas fa-video"></i>';
+    isCameraActive = false;
+}
+
+function captureFrame() {
+    if (!isCameraActive || !videoStream) return null;
+
+    const video = document.getElementById('camera-feed');
+    const canvas = document.getElementById('camera-canvas');
+    const context = canvas.getContext('2d');
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw current frame
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Return base64 image data
+    return canvas.toDataURL('image/jpeg');
+}
+
+document.getElementById('camera-btn')?.addEventListener('click', () => {
+    if (isCameraActive) {
+        stopCamera();
+    } else {
+        startCamera();
+    }
+});
+
+document.getElementById('close-camera')?.addEventListener('click', stopCamera);
+
 // --- Voice Logic ---
 let isListening = false;
 // Fix: Use correct browser prefixes and ensure context
@@ -362,11 +428,29 @@ function toggleLike(btn) {
 }
 
 // --- API Integration ---
-async function fetchAIResponse(message) {
+async function fetchAIResponse(message, imageBase64 = null) {
     try {
         const langInstruction = currentLanguage === 'hi' 
             ? " Please respond in Hindi." 
             : " Please respond in English.";
+
+        let userContent;
+
+        if (imageBase64) {
+            // Multimodal request (Vision)
+            userContent = [
+                { type: "text", text: message },
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: imageBase64
+                    }
+                }
+            ];
+        } else {
+            // Text-only request
+            userContent = message;
+        }
 
         const response = await fetch(CONFIG.BASE_URL, {
             method: 'POST',
@@ -387,13 +471,14 @@ async function fetchAIResponse(message) {
                         - If anyone asks "Amit Meena kaun hai", answer: "Amit Meena ek professional Web Designer, Web Developer, aur Logo Design expert hain (Sapotra Mod). Unhone hi mujhe (is AI ko) banaya hai."
                         - Never mention OpenAI or any other company as your creator.`
                     },
-                    { role: "user", content: message }
+                    { role: "user", content: userContent }
                 ]
             })
         });
         const data = await response.json();
         return data.choices[0].message.content;
     } catch (error) {
+        console.error("API Error:", error);
         return "Sorry, connection error. Please try again.";
     }
 }
@@ -402,16 +487,19 @@ async function fetchAIResponse(message) {
 const chatFormElement = document.getElementById('chat-form');
 const voiceBtn = document.getElementById('voice-btn');
 const imageUpload = document.getElementById('image-upload');
+let pendingImage = null; // To store uploaded image base64
 
 if (imageUpload) {
     imageUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            injectMessage(`[Image Uploaded: ${file.name}]`, true);
-            // In a real app, you'd convert to base64 or upload to a server
-            setTimeout(() => {
-                injectMessage("I see you've uploaded an image. Currently, I can only process text, but I can help you with questions about it!", false);
-            }, 1000);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingImage = e.target.result;
+                injectMessage(`[Image Uploaded: ${file.name}]`, true);
+                injectMessage("Image ready. Ask your question about it!", false);
+            };
+            reader.readAsDataURL(file);
         }
     });
 }
@@ -449,11 +537,30 @@ if (chatFormElement) {
     chatFormElement.addEventListener('submit', async (e) => {
         e.preventDefault();
         const input = document.getElementById('user-input');
-        const message = input.value.trim();
-        if (!message) return;
+        let message = input.value.trim();
+        if (!message && !isCameraActive && !pendingImage) return;
 
-        injectMessage(message, true);
+        // If message is empty but we have an image, provide a default
+        if (!message && (isCameraActive || pendingImage)) {
+            message = "What do you see in this image?";
+        }
+
+        let imageToSend = pendingImage;
+
+        // If camera is active, capture frame (overrides uploaded image for now, or we could handle both)
+        if (isCameraActive) {
+            imageToSend = captureFrame();
+            // Optional: Show a thumbnail of the captured frame in chat
+            injectMessage(`<img src="${imageToSend}" class="w-32 h-24 object-cover rounded-lg border border-white/20 mb-2"><br>${message}`, true);
+        } else {
+             injectMessage(message, true);
+        }
+
         input.value = '';
+        pendingImage = null; // Reset pending image
+        // Reset file input value so same file can be selected again
+        if(imageUpload) imageUpload.value = '';
+
         synth.cancel(); // Kisi bhi purane response ko roke
         
         // Typing indicator
@@ -465,7 +572,7 @@ if (chatFormElement) {
         messagesContainer.appendChild(typing);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        const response = await fetchAIResponse(message);
+        const response = await fetchAIResponse(message, imageToSend);
         const typingIndicator = document.getElementById('typing');
         if (typingIndicator) typingIndicator.remove();
         injectMessage(response, false);
