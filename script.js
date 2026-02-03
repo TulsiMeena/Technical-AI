@@ -17,6 +17,11 @@ let users = JSON.parse(localStorage.getItem('amit_ai_users')) || {}; // Register
 let currentUser = JSON.parse(localStorage.getItem('amit_ai_session')) || null; // Active session
 let tempSignupData = null; // Stores data pending verification
 
+const ADMIN_CREDENTIALS = {
+    email: 'admin@technical01.ai',
+    password: 'Technical@123'
+};
+
 const TRANSLATIONS = {
     en: {
         history: "History",
@@ -843,10 +848,19 @@ function checkSession() {
         appMain.classList.remove('hidden');
         appMain.classList.add('flex');
 
-        // Update Sidebar Name
+        // Update Sidebar Name & Photo
         const userNameEl = appSidebar.querySelector('.p-6.border-t span.text-xs');
-        if (userNameEl) {
-             userNameEl.innerText = currentUser.name;
+        const userImgEl = appSidebar.querySelector('.p-6.border-t img');
+
+        if (userNameEl) userNameEl.innerText = currentUser.name;
+        if (userImgEl && currentUser.profilePic) userImgEl.src = currentUser.profilePic;
+
+        // Show Admin Nav if Admin
+        const adminNav = document.getElementById('nav-admin');
+        if (currentUser.role === 'admin') {
+            adminNav.classList.remove('hidden');
+        } else {
+            adminNav.classList.add('hidden');
         }
 
         // Add Logout Button if not exists
@@ -881,6 +895,20 @@ function handleLogin(e) {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
+    // Check Admin Login
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        currentUser = {
+            name: "Master Admin",
+            email: email,
+            role: "admin",
+            profilePic: "https://cdn-icons-png.flaticon.com/512/2304/2304226.png"
+        };
+        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+        checkSession();
+        injectMessage(`Welcome, Master Admin. Full control unlocked.`, false, false);
+        return;
+    }
+
     const user = users[email];
 
     if (user && user.password === password) {
@@ -893,11 +921,136 @@ function handleLogin(e) {
     }
 }
 
+// --- Admin Logic ---
+function exportUserData() {
+    const dataStr = JSON.stringify(users, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `technical_ai_users_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    alert("User database downloaded successfully.");
+}
+
+async function verifyBiometric() {
+    // 1. Try WebAuthn (Real Biometric) if available
+    if (window.PublicKeyCredential) {
+        try {
+            // Simple assertion - usually triggers TouchID/FaceID/Windows Hello
+            // Note: This requires a previously registered credential in a real app,
+            // but for simulation we just trigger the UI if possible or mock it.
+            // Since we don't have a backend to generate challenges, we'll use a visual simulation
+            // which is more reliable for this static demo environment.
+             await simulateBiometricScan();
+             exportUserData();
+        } catch (e) {
+            console.error(e);
+            alert("Biometric verification failed.");
+        }
+    } else {
+        // Fallback Simulation
+        await simulateBiometricScan();
+        exportUserData();
+    }
+}
+
+function simulateBiometricScan() {
+    return new Promise((resolve) => {
+        // Create Overlay
+        const overlay = document.createElement('div');
+        overlay.className = "fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center backdrop-blur-md";
+        overlay.innerHTML = `
+            <div class="relative w-24 h-24 mb-4">
+                <div class="absolute inset-0 border-4 border-blue-500/30 rounded-full animate-pulse"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fas fa-fingerprint text-5xl text-blue-500 animate-pulse"></i>
+                </div>
+                <div class="absolute inset-0 border-t-4 border-blue-400 rounded-full animate-spin" style="animation-duration: 2s;"></div>
+            </div>
+            <p class="text-white font-mono text-lg animate-pulse">Scanning Fingerprint...</p>
+        `;
+        document.body.appendChild(overlay);
+
+        // Success Animation after 2s
+        setTimeout(() => {
+            overlay.innerHTML = `
+                <div class="w-24 h-24 mb-4 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)]">
+                    <i class="fas fa-check text-4xl text-green-400"></i>
+                </div>
+                <p class="text-green-400 font-mono text-lg font-bold">Access Granted</p>
+            `;
+
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+                resolve(true);
+            }, 1000);
+        }, 2000);
+    });
+}
+
+// --- Signup Camera Logic ---
+let signupVideoStream = null;
+let capturedProfilePic = null;
+
+async function startSignupCamera() {
+    try {
+        const video = document.getElementById('signup-video');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        signupVideoStream = stream;
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        document.getElementById('signup-camera-placeholder').classList.add('hidden');
+        document.getElementById('btn-capture-signup').classList.remove('hidden');
+    } catch (err) {
+        console.error("Signup Camera Error:", err);
+        alert("Could not access camera for profile photo.");
+    }
+}
+
+function captureSignupPhoto() {
+    if (!signupVideoStream) return;
+
+    const video = document.getElementById('signup-video');
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 300; // Square aspect for profile
+    const ctx = canvas.getContext('2d');
+
+    // Crop center square
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    const startX = (video.videoWidth - size) / 2;
+    const startY = (video.videoHeight - size) / 2;
+
+    ctx.drawImage(video, startX, startY, size, size, 0, 0, canvas.width, canvas.height);
+
+    capturedProfilePic = canvas.toDataURL('image/jpeg');
+
+    // Show Preview
+    const preview = document.getElementById('signup-photo-preview');
+    preview.src = capturedProfilePic;
+    preview.classList.remove('hidden');
+    video.classList.add('hidden');
+
+    // Stop Stream
+    signupVideoStream.getTracks().forEach(track => track.stop());
+    signupVideoStream = null;
+    document.getElementById('btn-capture-signup').classList.add('hidden');
+}
+
 function handleSignup(e) {
     e.preventDefault();
     const name = document.getElementById('signup-name').value;
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
+
+    if (!capturedProfilePic) {
+        if(!confirm("You haven't taken a profile photo. Continue with default?")) return;
+    }
 
     if (users[email]) {
         alert("User already exists!");
@@ -907,7 +1060,7 @@ function handleSignup(e) {
     // Generate Mock OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    tempSignupData = { name, email, password, otp };
+    tempSignupData = { name, email, password, otp, profilePic: capturedProfilePic };
 
     // Simulate Email Sending
     document.getElementById('verify-email-display').innerText = email;
@@ -928,7 +1081,9 @@ function handleVerify(e) {
         users[tempSignupData.email] = {
             name: tempSignupData.name,
             email: tempSignupData.email,
-            password: tempSignupData.password
+            password: tempSignupData.password,
+            profilePic: tempSignupData.profilePic,
+            role: 'user'
         };
         localStorage.setItem('amit_ai_users', JSON.stringify(users));
 
