@@ -12,6 +12,11 @@ let chats = JSON.parse(localStorage.getItem('amit_ai_chats')) || {};
 let currentTheme = localStorage.getItem('amit_ai_theme') || 'slate';
 let currentLanguage = localStorage.getItem('amit_ai_lang') || 'en';
 
+// --- Auth State ---
+let users = JSON.parse(localStorage.getItem('amit_ai_users')) || {}; // Registered users
+let currentUser = JSON.parse(localStorage.getItem('amit_ai_session')) || null; // Active session
+let tempSignupData = null; // Stores data pending verification
+
 const TRANSLATIONS = {
     en: {
         history: "History",
@@ -816,9 +821,141 @@ function shareWebsite() {
 
 // --- Init ---
 window.onload = () => {
+    checkSession(); // Auth Check
     setTheme(currentTheme);
     setLanguage(currentLanguage);
     if (Object.keys(chats).length === 0) createNewChat();
     else loadChat(Object.keys(chats).sort((a,b) => chats[b].timestamp - chats[a].timestamp)[0]);
     renderHistory();
 };
+
+// --- Auth Logic (Mock System) ---
+
+function checkSession() {
+    const authContainer = document.getElementById('auth-container');
+    const appSidebar = document.getElementById('app-sidebar');
+    const appMain = document.getElementById('app-main');
+
+    if (currentUser) {
+        // User logged in
+        authContainer.classList.add('hidden');
+        appSidebar.classList.remove('hidden');
+        appMain.classList.remove('hidden');
+        appMain.classList.add('flex');
+
+        // Update Sidebar Name
+        const userNameEl = appSidebar.querySelector('.p-6.border-t span.text-xs');
+        if (userNameEl) {
+             userNameEl.innerText = currentUser.name;
+        }
+
+        // Add Logout Button if not exists
+        if (!document.getElementById('logout-btn')) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.id = 'logout-btn';
+            logoutBtn.className = "ml-auto text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider";
+            logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+            logoutBtn.onclick = logout;
+            userNameEl.parentElement.appendChild(logoutBtn);
+        }
+
+    } else {
+        // User not logged in
+        authContainer.classList.remove('hidden');
+        appSidebar.classList.add('hidden');
+        appMain.classList.add('hidden');
+        appMain.classList.remove('flex');
+
+        // Show Login by default
+        showAuthPage('login');
+    }
+}
+
+function showAuthPage(pageId) {
+    document.querySelectorAll('.auth-page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`page-${pageId}`).classList.remove('hidden');
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    const user = users[email];
+
+    if (user && user.password === password) {
+        currentUser = user;
+        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+        checkSession();
+        injectMessage(`Welcome back, ${user.name}!`, false, false);
+    } else {
+        alert("Invalid Email or Password");
+    }
+}
+
+function handleSignup(e) {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value;
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+
+    if (users[email]) {
+        alert("User already exists!");
+        return;
+    }
+
+    // Generate Mock OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    tempSignupData = { name, email, password, otp };
+
+    // Simulate Email Sending
+    document.getElementById('verify-email-display').innerText = email;
+    showAuthPage('verify');
+
+    // Alert the user with the code (Simulating email arrival)
+    setTimeout(() => {
+        alert(`[MOCK EMAIL SERVICE]\n\nSubject: Verify your account\n\nHello ${name},\nYour verification code is: ${otp}`);
+    }, 1000);
+}
+
+function handleVerify(e) {
+    e.preventDefault();
+    const code = document.getElementById('verify-code').value;
+
+    if (tempSignupData && code === tempSignupData.otp) {
+        // Register User
+        users[tempSignupData.email] = {
+            name: tempSignupData.name,
+            email: tempSignupData.email,
+            password: tempSignupData.password
+        };
+        localStorage.setItem('amit_ai_users', JSON.stringify(users));
+
+        // Auto Login
+        currentUser = users[tempSignupData.email];
+        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+
+        // Cleanup
+        tempSignupData = null;
+        checkSession();
+
+        injectMessage(`Namaste ${currentUser.name}! Account verified successfully.`, false, false);
+    } else {
+        alert("Invalid Verification Code!");
+    }
+}
+
+function resendCode() {
+    if (tempSignupData) {
+         alert(`[MOCK EMAIL SERVICE]\n\nSubject: Resend Code\n\nYour code is: ${tempSignupData.otp}`);
+    }
+}
+
+function logout() {
+    if (confirm("Are you sure you want to log out?")) {
+        currentUser = null;
+        localStorage.removeItem('amit_ai_session');
+        checkSession();
+    }
+}
