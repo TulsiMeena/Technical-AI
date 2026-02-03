@@ -126,7 +126,7 @@ const synth = window.speechSynthesis;
 
 if (recognition) {
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true; // Changed to true for smooth real-time feedback
     
     recognition.onstart = () => {
         isListening = true;
@@ -149,18 +149,71 @@ if (recognition) {
     };
 
     recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+
         const userInput = document.getElementById('user-input');
         if (userInput) {
-            userInput.value = transcript;
-            const chatForm = document.getElementById('chat-form');
-            if (chatForm) {
-                // Trigger form submission properly
-                const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
-                chatForm.dispatchEvent(submitEvent);
+            // Show whatever we have so far
+            userInput.value = finalTranscript || interimTranscript;
+
+            // If we have a final result, submit it
+            if (finalTranscript) {
+                const chatForm = document.getElementById('chat-form');
+                if (chatForm) {
+                    const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+                    chatForm.dispatchEvent(submitEvent);
+                }
             }
         }
     };
+}
+
+// --- Voice Selection & Sentiment ---
+function getBestVoice(lang) {
+    const voices = synth.getVoices();
+    // Priority list for more natural voices
+    const preferredNames = ['Google', 'Microsoft', 'Natural'];
+
+    // Filter by language
+    const langVoices = voices.filter(v => v.lang.startsWith(lang));
+
+    // Try to find a preferred voice
+    for (const name of preferredNames) {
+        const best = langVoices.find(v => v.name.includes(name));
+        if (best) return best;
+    }
+
+    return langVoices[0] || voices[0];
+}
+
+function getSentimentSettings(text) {
+    const lowerText = text.toLowerCase();
+
+    // Basic Sentiment Keywords
+    const sadWords = ['sorry', 'apologize', 'sad', 'unfortunate', 'regret', 'maafi', 'dukhi', 'afsos'];
+    const happyWords = ['great', 'awesome', 'happy', 'glad', 'congratulations', 'badhai', 'khushi', 'shandaar'];
+    const angryWords = ['wrong', 'error', 'stop', 'failed', 'galt', 'bekaar', 'kharaab'];
+
+    if (sadWords.some(w => lowerText.includes(w))) {
+        return { rate: 0.9, pitch: 0.8 }; // Slower, lower pitch for sadness
+    }
+    if (happyWords.some(w => lowerText.includes(w))) {
+        return { rate: 1.1, pitch: 1.2 }; // Faster, higher pitch for excitement
+    }
+    if (angryWords.some(w => lowerText.includes(w))) {
+        return { rate: 1.2, pitch: 0.9 }; // Faster, slightly lower/aggressive
+    }
+
+    return { rate: 1.0, pitch: 1.0 }; // Neutral
 }
 
 function speakText(text) {
@@ -171,14 +224,29 @@ function speakText(text) {
     synth.cancel();
     
     const utterance = new SpeechSynthesisUtterance(text);
+    const langCode = currentLanguage === 'hi' ? 'hi' : 'en';
     utterance.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+
+    // Apply "Smart" Voice Settings
+    const voice = getBestVoice(langCode);
+    if (voice) utterance.voice = voice;
+
+    const sentiment = getSentimentSettings(text);
+    utterance.rate = sentiment.rate;
+    utterance.pitch = sentiment.pitch;
     
     // Add event listeners for debugging and smoother flow
     utterance.onerror = (e) => console.error("Speech synthesis error", e);
     
     synth.speak(utterance);
+}
+
+// Load voices immediately so they are ready
+if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = () => {
+        // Just triggering a load
+        synth.getVoices();
+    };
 }
 
 // --- Chat Interface Logic ---
