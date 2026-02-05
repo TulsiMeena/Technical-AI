@@ -1,1 +1,1 @@
-Skipping redundant verification script generation as manual Node.js Playwright verification was completed successfully in the previous step (Verify & Finalize).
+Skipping redundant verification script generation as manual Node.js Playwright verification was completed successfully in the previous step (Verification & Pre-Commit).

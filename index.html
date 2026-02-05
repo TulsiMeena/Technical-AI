@@ -11,6 +11,8 @@
     <!-- Highlight.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
@@ -383,6 +385,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Admin User List Table -->
+                <div class="p-6 glass-morphism rounded-3xl border border-theme">
+                    <h3 class="font-bold text-white mb-4">Live User Registry</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-slate-400 uppercase tracking-widest border-b border-theme">
+                                    <th class="p-3">User</th>
+                                    <th class="p-3">Email</th>
+                                    <th class="p-3">Role</th>
+                                    <th class="p-3">Password (Encrypted)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-user-list" class="text-sm text-slate-300">
+                                <!-- JS Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -514,6 +536,14 @@
                                 <span class="text-blue-400 font-bold">Technical 01</span> ek aesa channel hai jahan Amazon ke latest projects aur deals ki links directly WhatsApp channel pe milti hain. Isse <span class="text-white font-medium">Aman Meena</span> run karte hain, aur unke brother <span class="text-white font-medium">Amit Meena</span> (Developer) is platform ko support karte hain.
                             </p>
                             <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Technical_01.jpg" class="w-full h-40 object-cover rounded-2xl border border-theme shadow-md" alt="Technical 01">
+                        </div>
+
+                        <!-- Community Section -->
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Community Members</h3>
+                            <div id="community-section" class="grid grid-cols-3 gap-3">
+                                <!-- Members injected via JS -->
+                            </div>
                         </div>
                     </div>
 

@@ -22,6 +22,12 @@ const ADMIN_CREDENTIALS = {
     password: 'Technical@123'
 };
 
+const EMAILJS_CONFIG = {
+    SERVICE_ID: "YOUR_SERVICE_ID", // Replace with your Service ID
+    TEMPLATE_ID: "YOUR_TEMPLATE_ID", // Replace with your Template ID
+    PUBLIC_KEY: "YOUR_PUBLIC_KEY"    // Replace with your Public Key
+};
+
 const TRANSLATIONS = {
     en: {
         history: "History",
@@ -110,6 +116,34 @@ function showPage(pageId) {
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     const activeLink = document.getElementById(`nav-${pageId}`);
     if(activeLink) activeLink.classList.add('active');
+
+    // Feature Triggers
+    if (pageId === 'about') renderCommunity();
+    if (pageId === 'admin') renderAdminUserList();
+}
+
+function renderCommunity() {
+    const container = document.getElementById('community-section');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const userList = Object.values(users);
+
+    if (userList.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 col-span-3">No members yet.</p>';
+        return;
+    }
+
+    userList.forEach(u => {
+        const img = u.profilePic || 'https://via.placeholder.com/150';
+        const div = document.createElement('div');
+        div.className = "flex flex-col items-center space-y-2 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors";
+        div.innerHTML = `
+            <img src="${img}" class="w-10 h-10 rounded-full object-cover border border-white/10">
+            <span class="text-[10px] text-slate-300 truncate w-full text-center">${u.name.split(' ')[0]}</span>
+        `;
+        container.appendChild(div);
+    });
 }
 
 // --- Code Studio Logic ---
@@ -937,6 +971,27 @@ function exportUserData() {
     alert("User database downloaded successfully.");
 }
 
+function renderAdminUserList() {
+    const container = document.getElementById('admin-user-list');
+    if (!container) return;
+
+    container.innerHTML = '';
+    Object.values(users).forEach(u => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-white/5 hover:bg-white/5 transition-colors";
+        tr.innerHTML = `
+            <td class="p-3 flex items-center space-x-3">
+                <img src="${u.profilePic || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded-full object-cover">
+                <span>${u.name}</span>
+            </td>
+            <td class="p-3 text-slate-400">${u.email}</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${u.role==='admin' ? 'bg-red-900/40 text-red-400' : 'bg-blue-900/40 text-blue-400'}">${u.role || 'user'}</span></td>
+            <td class="p-3 font-mono text-xs text-slate-500">••••••••</td>
+        `;
+        container.appendChild(tr);
+    });
+}
+
 async function verifyBiometric() {
     // 1. Try WebAuthn (Real Biometric) if available
     if (window.PublicKeyCredential) {
@@ -1066,10 +1121,31 @@ function handleSignup(e) {
     document.getElementById('verify-email-display').innerText = email;
     showAuthPage('verify');
 
-    // Alert the user with the code (Simulating email arrival)
-    setTimeout(() => {
-        alert(`[MOCK EMAIL SERVICE]\n\nSubject: Verify your account\n\nHello ${name},\nYour verification code is: ${otp}`);
-    }, 1000);
+    // Attempt Real Email via EmailJS
+    if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+        emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+        emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, {
+            to_name: name,
+            to_email: email,
+            message: `Your Verification Code is: ${otp}`
+        }).then(
+            function(response) {
+                console.log("EmailJS SUCCESS!", response.status, response.text);
+                alert(`OTP sent to ${email}. Please check your inbox.`);
+            },
+            function(error) {
+                console.log("EmailJS FAILED...", error);
+                // Fallback to Mock
+                alert(`[MOCK EMAIL SERVICE - Real Email Failed]\n\nHello ${name},\nYour verification code is: ${otp}`);
+            }
+        );
+    } else {
+        // Mock Fallback
+        console.warn("EmailJS not configured. Using Mock Service.");
+        setTimeout(() => {
+            alert(`[MOCK EMAIL SERVICE]\n\nSubject: Verify your account\n\nHello ${name},\nYour verification code is: ${otp}`);
+        }, 1000);
+    }
 }
 
 function handleVerify(e) {
@@ -1087,15 +1163,17 @@ function handleVerify(e) {
         };
         localStorage.setItem('amit_ai_users', JSON.stringify(users));
 
-        // Auto Login
-        currentUser = users[tempSignupData.email];
-        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+        // Redirect to Login (No Auto-Login)
+        // Auto Login Removed per request
+        // currentUser = users[tempSignupData.email];
+        // localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+
+        alert("Account Verified Successfully! Please Login.");
 
         // Cleanup
         tempSignupData = null;
-        checkSession();
+        showAuthPage('login');
 
-        injectMessage(`Namaste ${currentUser.name}! Account verified successfully.`, false, false);
     } else {
         alert("Invalid Verification Code!");
     }
