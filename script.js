@@ -13,8 +13,8 @@ let currentTheme = localStorage.getItem('amit_ai_theme') || 'slate';
 let currentLanguage = localStorage.getItem('amit_ai_lang') || 'en';
 
 // --- Auth State ---
-let users = JSON.parse(localStorage.getItem('amit_ai_users')) || {}; // Registered users
-let currentUser = JSON.parse(localStorage.getItem('amit_ai_session')) || null; // Active session
+let users = JSON.parse(localStorage.getItem('amit_ai_users')) || {}; // Registered users (Permanent)
+let currentUser = JSON.parse(sessionStorage.getItem('amit_ai_session')) || null; // Active session (Tab Only)
 let tempSignupData = null; // Stores data pending verification
 
 const ADMIN_CREDENTIALS = {
@@ -320,6 +320,40 @@ document.getElementById('camera-btn')?.addEventListener('click', () => {
 
 document.getElementById('close-camera')?.addEventListener('click', stopCamera);
 
+// --- Screen Sharing Logic ---
+async function startScreenShare() {
+    try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+
+        // Wait for video to load metadata
+        video.onloadedmetadata = () => {
+             // Capture frame immediately
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const base64 = canvas.toDataURL('image/jpeg');
+
+            // Inject into chat flow
+            pendingAttachment = { type: 'image', content: base64 };
+            injectMessage("[Screen Capture Ready]", true);
+            injectMessage("I see your screen. What would you like to know?", false);
+
+            // Stop stream immediately after capture
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+    } catch (err) {
+        console.error("Screen Share Error:", err);
+        alert("Screen sharing cancelled or failed.");
+    }
+}
+
 // --- Voice Logic ---
 let isListening = false;
 // Fix: Use correct browser prefixes and ensure context
@@ -446,11 +480,46 @@ function speakText(text) {
 
 // Load voices immediately so they are ready
 if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = () => {
-        // Just triggering a load
-        synth.getVoices();
-    };
+    synth.onvoiceschanged = populateVoiceList;
 }
+
+// --- Voice Settings Logic ---
+let selectedVoiceIndex = -1;
+
+function populateVoiceList() {
+    const voices = synth.getVoices();
+    const select = document.getElementById('voice-select');
+    if (!select) return;
+
+    select.innerHTML = '<option value="-1">Auto-Detect Best Voice</option>';
+
+    voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.value = index;
+
+        // Mark high quality voices visually
+        if (voice.name.includes('Google') || voice.name.includes('Microsoft')) {
+            option.style.fontWeight = 'bold';
+            option.textContent += ' ⭐';
+        }
+
+        select.appendChild(option);
+    });
+}
+
+function toggleVoicePanel() {
+    const panel = document.getElementById('voice-panel');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+        populateVoiceList();
+    }
+}
+
+// Update voice when changed in dropdown
+document.getElementById('voice-select')?.addEventListener('change', (e) => {
+    selectedVoiceIndex = parseInt(e.target.value);
+});
 
 // --- Chat Interface Logic ---
 function addInitialMessage() {
@@ -937,7 +1006,7 @@ function handleLogin(e) {
             role: "admin",
             profilePic: "https://cdn-icons-png.flaticon.com/512/2304/2304226.png"
         };
-        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+        sessionStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
         checkSession();
         injectMessage(`Welcome, Master Admin. Full control unlocked.`, false, false);
         return;
@@ -947,7 +1016,7 @@ function handleLogin(e) {
 
     if (user && user.password === password) {
         currentUser = user;
-        localStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
+        sessionStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
         checkSession();
         injectMessage(`Welcome back, ${user.name}!`, false, false);
     } else {
@@ -1188,7 +1257,7 @@ function resendCode() {
 function logout() {
     if (confirm("Are you sure you want to log out?")) {
         currentUser = null;
-        localStorage.removeItem('amit_ai_session');
+        sessionStorage.removeItem('amit_ai_session');
         checkSession();
     }
 }
