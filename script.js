@@ -1021,6 +1021,7 @@ function handleLogin(e) {
         sessionStorage.setItem('amit_ai_session', JSON.stringify(currentUser));
         checkSession();
         injectMessage(`Welcome, Master Admin. Full control unlocked.`, false, false);
+        speakText("Welcome back, Master Admin. Initiating Command Center.");
         return;
     }
 
@@ -1146,24 +1147,88 @@ function simulateFaceScan() {
             const video = overlay.querySelector('video');
             video.srcObject = stream;
 
-            // 3. Simulate Analysis Delay
-            setTimeout(() => {
-                // Success State
-                stream.getTracks().forEach(track => track.stop()); // Stop Cam
-                overlay.querySelector('.relative').style.borderColor = '#4ade80'; // Green
-                document.getElementById('face-scan-status').innerText = "Face Match Confirmed";
-                document.getElementById('face-scan-status').className = "text-green-400 font-mono text-lg font-bold";
+            // 3. Perform Comparison after delay
+            setTimeout(async () => {
+                try {
+                    const match = await compareFaceWithKey(video, masterFaceKey);
 
-                setTimeout(() => {
+                    if (match) {
+                        // Success State
+                        stream.getTracks().forEach(track => track.stop());
+                        overlay.querySelector('.relative').style.borderColor = '#4ade80'; // Green
+                        document.getElementById('face-scan-status').innerText = "Face Match Confirmed";
+                        document.getElementById('face-scan-status').className = "text-green-400 font-mono text-lg font-bold";
+
+                        setTimeout(() => {
+                            document.body.removeChild(overlay);
+                            resolve(true);
+                        }, 1000);
+                    } else {
+                        throw new Error("Face Mismatch");
+                    }
+                } catch (err) {
+                    stream.getTracks().forEach(track => track.stop());
                     document.body.removeChild(overlay);
-                    resolve(true);
-                }, 1000);
-            }, 3000); // 3 Seconds scan
+                    alert("Face Verification Failed: Face did not match the Master Key.");
+                    reject(err);
+                }
+            }, 2500);
 
         } catch (e) {
             document.body.removeChild(overlay);
             reject(e);
         }
+    });
+}
+
+function compareFaceWithKey(videoElement, keyBase64) {
+    return new Promise((resolve) => {
+        // 1. Create Comparison Canvases (Small for speed)
+        const width = 100;
+        const height = 100;
+
+        const c1 = document.createElement('canvas');
+        c1.width = width; c1.height = height;
+        const ctx1 = c1.getContext('2d');
+
+        const c2 = document.createElement('canvas');
+        c2.width = width; c2.height = height;
+        const ctx2 = c2.getContext('2d');
+
+        // 2. Draw Live Frame
+        ctx1.drawImage(videoElement, 0, 0, width, height);
+
+        // 3. Draw Stored Key
+        const img = new Image();
+        img.onload = () => {
+            ctx2.drawImage(img, 0, 0, width, height);
+
+            // 4. Compare Pixels
+            const data1 = ctx1.getImageData(0, 0, width, height).data;
+            const data2 = ctx2.getImageData(0, 0, width, height).data;
+
+            let diff = 0;
+            const totalPixels = width * height;
+
+            for (let i = 0; i < data1.length; i += 4) {
+                // Simple RGB distance
+                const rDiff = Math.abs(data1[i] - data2[i]);
+                const gDiff = Math.abs(data1[i+1] - data2[i+1]);
+                const bDiff = Math.abs(data1[i+2] - data2[i+2]);
+
+                if (rDiff + gDiff + bDiff > 150) { // Threshold for "different pixel"
+                    diff++;
+                }
+            }
+
+            const differencePercent = (diff / totalPixels) * 100;
+            console.log("Face Difference:", differencePercent.toFixed(2) + "%");
+
+            // If difference is less than 35%, assume same person (allowing for light/angle)
+            // This is NOT secure biometrics, but prevents random/empty frames
+            resolve(differencePercent < 35);
+        };
+        img.src = keyBase64;
     });
 }
 
