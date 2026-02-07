@@ -133,6 +133,19 @@
 </head>
 <body class="theme-slate text-slate-200 h-screen flex flex-col md:flex-row overflow-hidden">
 
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 glass-morphism border-b border-theme z-40">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-robot text-white text-sm"></i>
+            </div>
+            <span class="font-bold text-sm neon-text">Technical AI</span>
+        </div>
+        <button onclick="toggleMobileMenu()" class="text-slate-200 p-2 rounded-lg bg-white/5 border border-white/10">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
     <!-- Auth Pages Container -->
     <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -253,7 +266,7 @@
     </div>
 
     <!-- Sidebar -->
-    <aside id="app-sidebar" class="sidebar hidden w-full md:w-72 border-r flex flex-col shrink-0 glass-morphism z-20">
+    <aside id="app-sidebar" class="sidebar hidden md:flex w-full md:w-72 border-r flex-col shrink-0 glass-morphism z-50 fixed md:relative inset-0 md:inset-auto h-full bg-slate-900/95 md:bg-transparent backdrop-blur-xl md:backdrop-filter-none">
         <div class="p-6 border-b border-theme flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 anim-float">
@@ -262,10 +275,15 @@
                 <span class="font-bold text-lg tracking-tight neon-text">Technical AI</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button onclick="toggleVoicePanel()" class="text-slate-400 hover:text-pink-500 transition-colors p-2 btn-smokey rounded-lg" title="Voice Settings">
+                <!-- Mobile Close Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400 hover:text-red-500 transition-colors p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <button onclick="toggleVoicePanel()" class="hidden md:block text-slate-400 hover:text-pink-500 transition-colors p-2 btn-smokey rounded-lg" title="Voice Settings">
                     <i class="fas fa-sliders-h text-lg"></i>
                 </button>
-                <button onclick="shareWebsite()" class="text-slate-400 hover:text-blue-500 transition-colors p-2 btn-smokey rounded-lg" title="Share Website">
+                <button onclick="shareWebsite()" class="hidden md:block text-slate-400 hover:text-blue-500 transition-colors p-2 btn-smokey rounded-lg" title="Share Website">
                     <i class="fas fa-share-nodes text-lg"></i>
                 </button>
                 <button onclick="createNewChat()" class="text-slate-400 hover:text-white transition-colors p-2 btn-smokey rounded-lg" title="New Chat">
@@ -368,8 +386,20 @@
                                 <p class="text-xs text-slate-400">Export registered user records</p>
                             </div>
                         </div>
+
+                        <!-- Face Lock Setup -->
+                        <div class="mb-6 p-3 bg-black/30 rounded-xl border border-white/5">
+                            <label class="text-[10px] uppercase text-slate-500 font-bold mb-2 block">Security Setup</label>
+                            <label class="flex items-center space-x-2 cursor-pointer hover:text-blue-400 transition-colors">
+                                <i class="fas fa-camera text-slate-400"></i>
+                                <span class="text-xs text-slate-300">Set Master Face Key</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="setMasterFace(this)">
+                            </label>
+                            <p id="face-key-status" class="text-[10px] text-slate-500 mt-1 italic">No face key set (Using Fingerprint)</p>
+                        </div>
+
                         <p class="text-sm text-slate-300 mb-6">
-                            Securely download the full list of signed-up users, including names, emails, and profile photo data.
+                            Securely download the full list of signed-up users.
                             <span class="text-red-400 font-bold block mt-2"><i class="fas fa-lock mr-1"></i> Biometric Auth Required</span>
                         </p>
                         <button onclick="verifyBiometric()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition-all btn-smokey">

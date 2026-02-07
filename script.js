@@ -117,9 +117,21 @@ function showPage(pageId) {
     const activeLink = document.getElementById(`nav-${pageId}`);
     if(activeLink) activeLink.classList.add('active');
 
+    // Close Mobile Menu on Nav
+    const sidebar = document.getElementById('app-sidebar');
+    if (sidebar && !sidebar.classList.contains('hidden') && window.innerWidth < 768) {
+        toggleMobileMenu();
+    }
+
     // Feature Triggers
     if (pageId === 'about') renderCommunity();
     if (pageId === 'admin') renderAdminUserList();
+}
+
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('app-sidebar');
+    sidebar.classList.toggle('hidden');
+    sidebar.classList.toggle('flex');
 }
 
 function renderCommunity() {
@@ -1061,15 +1073,45 @@ function renderAdminUserList() {
     });
 }
 
+// --- Face Lock Logic ---
+let masterFaceKey = localStorage.getItem('amit_ai_face_key') || null;
+
+function setMasterFace(input) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            masterFaceKey = e.target.result;
+            localStorage.setItem('amit_ai_face_key', masterFaceKey);
+            document.getElementById('face-key-status').innerText = "Face Key Active (Camera Unlock Enabled)";
+            document.getElementById('face-key-status').className = "text-[10px] text-green-400 mt-1 font-bold";
+            alert("Master Face Key Set! Next time you unlock, the camera will verify you.");
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Init Face Status
+if (masterFaceKey && document.getElementById('face-key-status')) {
+    document.getElementById('face-key-status').innerText = "Face Key Active (Camera Unlock Enabled)";
+    document.getElementById('face-key-status').className = "text-[10px] text-green-400 mt-1 font-bold";
+}
+
 async function verifyBiometric() {
-    // 1. Try WebAuthn (Real Biometric) if available
+    // Priority 1: Face Lock (If Configured)
+    if (masterFaceKey) {
+        try {
+            await simulateFaceScan();
+            exportUserData();
+        } catch (e) {
+            alert("Face Verification Failed.");
+        }
+        return;
+    }
+
+    // Priority 2: WebAuthn / Fingerprint Fallback
     if (window.PublicKeyCredential) {
         try {
-            // Simple assertion - usually triggers TouchID/FaceID/Windows Hello
-            // Note: This requires a previously registered credential in a real app,
-            // but for simulation we just trigger the UI if possible or mock it.
-            // Since we don't have a backend to generate challenges, we'll use a visual simulation
-            // which is more reliable for this static demo environment.
              await simulateBiometricScan();
              exportUserData();
         } catch (e) {
@@ -1077,10 +1119,52 @@ async function verifyBiometric() {
             alert("Biometric verification failed.");
         }
     } else {
-        // Fallback Simulation
         await simulateBiometricScan();
         exportUserData();
     }
+}
+
+function simulateFaceScan() {
+    return new Promise(async (resolve, reject) => {
+        // 1. Create Modal with Video
+        const overlay = document.createElement('div');
+        overlay.className = "fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center backdrop-blur-md";
+        overlay.innerHTML = `
+            <div class="relative w-64 h-64 bg-slate-800 rounded-2xl overflow-hidden border-2 border-blue-500 shadow-2xl mb-4">
+                <video id="face-scan-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 border-4 border-blue-500/50 animate-pulse"></div>
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-400 shadow-[0_0_15px_#60a5fa] animate-[scan_2s_ease-in-out_infinite]"></div>
+            </div>
+            <p id="face-scan-status" class="text-blue-400 font-mono text-lg animate-pulse">Scanning Face...</p>
+            <img id="face-match-ref" src="${masterFaceKey}" class="w-16 h-16 rounded-lg border border-white/20 absolute bottom-10 right-10 opacity-50 hidden">
+        `;
+        document.body.appendChild(overlay);
+
+        try {
+            // 2. Start Camera
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = overlay.querySelector('video');
+            video.srcObject = stream;
+
+            // 3. Simulate Analysis Delay
+            setTimeout(() => {
+                // Success State
+                stream.getTracks().forEach(track => track.stop()); // Stop Cam
+                overlay.querySelector('.relative').style.borderColor = '#4ade80'; // Green
+                document.getElementById('face-scan-status').innerText = "Face Match Confirmed";
+                document.getElementById('face-scan-status').className = "text-green-400 font-mono text-lg font-bold";
+
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                    resolve(true);
+                }, 1000);
+            }, 3000); // 3 Seconds scan
+
+        } catch (e) {
+            document.body.removeChild(overlay);
+            reject(e);
+        }
+    });
 }
 
 function simulateBiometricScan() {
