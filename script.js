@@ -202,6 +202,11 @@ function saveChats() {
 }
 
 function createNewChat() {
+    // Optimization: Don't create new chat if current one is empty
+    if (chats[currentChatId] && chats[currentChatId].messages.length === 0) {
+        return;
+    }
+
     currentChatId = Date.now().toString();
     chats[currentChatId] = {
         title: "New Chat",
@@ -210,6 +215,14 @@ function createNewChat() {
     };
     saveChats();
     loadChat(currentChatId);
+}
+
+function clearAllChats() {
+    if (confirm("Delete all chat history?")) {
+        chats = {};
+        createNewChat();
+        renderHistory();
+    }
 }
 
 function loadChat(id) {
