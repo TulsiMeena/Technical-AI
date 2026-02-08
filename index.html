@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="google-site-verification" content="in3cEbCpL57DyOczdAe1Mia2dTUyhfREuB0tZ5XAgfk" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>_Technical_01 AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.2); border-radius: 10px; }
+        .nav-link.active { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-left: 3px solid #3b82f6; }
+        .message-anim { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Themes */
+        .theme-slate { --bg-main: #020617; --bg-side: #0f172a; --bg-chat: #020617; --border: #1e293b; }
+        .theme-zinc { --bg-main: #09090b; --bg-side: #18181b; --bg-chat: #09090b; --border: #27272a; }
+        .theme-rose { --bg-main: #1c0a0a; --bg-side: #2d1616; --bg-chat: #1c0a0a; --border: #451a1a; }
+        .theme-blue { --bg-main: #081229; --bg-side: #0c1a3b; --bg-chat: #081229; --border: #1e3a8a; }
+
+        body.theme-slate { background-color: var(--bg-main); }
+        .sidebar { background-color: var(--bg-side); border-color: var(--border); }
+        .main-content { background-color: var(--bg-chat); }
+        .border-theme { border-color: var(--border); }
+
+        /* Floating Input Improvement */
+        #page-chat { position: relative; }
+        .input-container { 
+            position: sticky; 
+            bottom: 0; 
+            padding-bottom: 2rem;
+            z-index: 10;
+        }
+        .input-blur {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: linear-gradient(to top, var(--bg-main) 40%, transparent);
+            pointer-events: none;
+        }
+
+        /* Smooth button hover effects */
+        .btn-smooth { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-smooth:hover { transform: translateY(-1px); }
+        .btn-smooth:active { transform: translateY(0); scale: 0.95; }
+
+        /* Message Bubbles Overrides */
+        .message-content {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .message-content:hover {
+            transform: scale(1.01);
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* ULTRA ADVANCED STYLES */
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-smokey {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0);
+        }
+        
+        .btn-smokey:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px) scale(1.02);
+            background: rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-smokey::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            opacity: 0;
+        }
+        
+        .btn-smokey:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 1;
+            transition: 0s;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1), 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .anim-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="theme-slate text-slate-200 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Auth Pages Container -->
+    <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        
+        <!-- Login Page -->
+        <div id="page-login" class="auth-page relative w-full max-w-md p-8 glass-morphism rounded-3xl border border-blue-500/30 shadow-2xl anim-float mx-4">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/40 mb-4">
+                    <i class="fas fa-robot text-3xl text-white"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white neon-text mb-2">Welcome Back</h2>
+                <p class="text-slate-400 text-sm">Sign in to continue to Technical AI</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-blue-400 uppercase tracking-widest ml-1">Email Address</label>
+                    <div class="relative group">
+                        <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors"></i>
+                        <input type="email" id="login-email" required class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-blue-500 focus:bg-black/60 transition-all placeholder-slate-600" placeholder="Enter your email">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-blue-400 uppercase tracking-widest ml-1">Password</label>
+                    <div class="relative group">
+                        <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors"></i>
+                        <input type="password" id="login-password" required class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-blue-500 focus:bg-black/60 transition-all placeholder-slate-600" placeholder="Enter your password">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all transform hover:scale-[1.02] active:scale-95 btn-smokey">
+                    Sign In
+                </button>
+            </form>
+            <p class="text-center mt-6 text-slate-400 text-sm">
+                Don't have an account? <a href="#" onclick="showAuthPage('signup')" class="text-blue-400 hover:text-white font-bold transition-colors">Create Account</a>
+            </p>
+        </div>
+
+        <!-- Signup Page -->
+        <div id="page-signup" class="auth-page hidden relative w-full max-w-md p-8 glass-morphism rounded-3xl border border-purple-500/30 shadow-2xl mx-4 my-8 overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-white neon-text mb-2">Create Account</h2>
+                <p class="text-slate-400 text-sm">Join the future of AI</p>
+            </div>
+            <form onsubmit="handleSignup(event)" class="space-y-5">
+                <!-- Profile Photo Section -->
+                <div class="space-y-2 text-center">
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-widest">Profile Photo</label>
+                    <div class="relative w-32 h-32 mx-auto bg-black/40 rounded-full overflow-hidden border-2 border-dashed border-purple-500/50 group hover:border-purple-400 transition-colors">
+                        <img id="signup-photo-preview" src="https://via.placeholder.com/150" class="w-full h-full object-cover hidden">
+                        <div id="signup-camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                            <i class="fas fa-camera text-2xl mb-1"></i>
+                            <span class="text-[10px]">Take Photo</span>
+                        </div>
+                        <video id="signup-video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover hidden"></video>
+                    </div>
+                    <div class="flex justify-center space-x-2">
+                        <button type="button" onclick="startSignupCamera()" class="text-[10px] px-3 py-1 bg-slate-700 hover:bg-purple-600 rounded text-white transition-colors">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button type="button" onclick="captureSignupPhoto()" id="btn-capture-signup" class="text-[10px] px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-white transition-colors hidden">
+                            <i class="fas fa-circle"></i> Capture
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <div class="relative group">
+                        <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors"></i>
+                        <input type="text" id="signup-name" required class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 focus:bg-black/60 transition-all placeholder-slate-600" placeholder="Your Name">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-widest ml-1">Email Address</label>
+                    <div class="relative group">
+                        <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors"></i>
+                        <input type="email" id="signup-email" required class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 focus:bg-black/60 transition-all placeholder-slate-600" placeholder="name@example.com">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-widest ml-1">Password</label>
+                    <div class="relative group">
+                        <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors"></i>
+                        <input type="password" id="signup-password" required class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 focus:bg-black/60 transition-all placeholder-slate-600" placeholder="Create a password">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-all transform hover:scale-[1.02] active:scale-95 btn-smokey">
+                    Sign Up
+                </button>
+            </form>
+            <p class="text-center mt-6 text-slate-400 text-sm">
+                Already have an account? <a href="#" onclick="showAuthPage('login')" class="text-purple-400 hover:text-white font-bold transition-colors">Sign In</a>
+            </p>
+        </div>
+
+        <!-- Verify Page -->
+        <div id="page-verify" class="auth-page hidden relative w-full max-w-md p-8 glass-morphism rounded-3xl border border-green-500/30 shadow-2xl mx-4">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-green-500/20 rounded-full mx-auto flex items-center justify-center mb-4 animate-pulse">
+                    <i class="fas fa-envelope-open-text text-3xl text-green-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Verify Email</h2>
+                <p class="text-slate-400 text-sm">We sent a verification code to <br><span id="verify-email-display" class="text-white font-bold"></span></p>
+            </div>
+            <form onsubmit="handleVerify(event)" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-green-400 uppercase tracking-widest ml-1">Verification Code</label>
+                    <input type="text" id="verify-code" required maxlength="6" class="w-full bg-black/40 border border-white/10 rounded-xl py-4 text-center text-2xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-green-500 focus:bg-black/60 transition-all" placeholder="000000">
+                </div>
+                <button type="submit" class="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-600/30 transition-all transform hover:scale-[1.02] active:scale-95 btn-smokey">
+                    Verify & Login
+                </button>
+            </form>
+            <p class="text-center mt-6">
+                <button onclick="resendCode()" class="text-xs text-slate-500 hover:text-white transition-colors uppercase tracking-widest font-bold">Resend Code</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="app-sidebar" class="sidebar hidden w-full md:w-72 border-r flex flex-col shrink-0 glass-morphism z-20">
+        <div class="p-6 border-b border-theme flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 anim-float">
+                    <i class="fas fa-robot text-xl text-white"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight neon-text">Technical AI</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleVoicePanel()" class="text-slate-400 hover:text-pink-500 transition-colors p-2 btn-smokey rounded-lg" title="Voice Settings">
+                    <i class="fas fa-sliders-h text-lg"></i>
+                </button>
+                <button onclick="shareWebsite()" class="text-slate-400 hover:text-blue-500 transition-colors p-2 btn-smokey rounded-lg" title="Share Website">
+                    <i class="fas fa-share-nodes text-lg"></i>
+                </button>
+                <button onclick="createNewChat()" class="text-slate-400 hover:text-white transition-colors p-2 btn-smokey rounded-lg" title="New Chat">
+                    <i class="fas fa-plus-square text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Voice Settings Panel -->
+        <div id="voice-panel" class="hidden p-4 bg-black/40 border-b border-theme space-y-3">
+            <h3 class="text-[10px] uppercase tracking-widest text-pink-400 font-bold">Voice Control</h3>
+            <select id="voice-select" class="w-full bg-slate-800 text-xs text-slate-200 p-2 rounded border border-theme focus:outline-none focus:border-pink-500">
+                <option value="auto">Auto-Detect Best Voice</option>
+            </select>
+            <div class="flex items-center space-x-2">
+                <span class="text-[10px] text-slate-400 w-8">Pitch</span>
+                <input type="range" id="voice-pitch" min="0.5" max="2" step="0.1" value="1" class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-[10px] text-slate-400 w-8">Speed</span>
+                <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1" class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
+            <div>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3" data-i18n="history">History</h3>
+                <div id="chat-history-list" class="space-y-1">
+                    <!-- History items injected here -->
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-theme">
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-3" data-i18n="navigation">Navigation</h3>
+                <button onclick="showPage('admin')" id="nav-admin" class="nav-link hidden w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-red-400 bg-red-900/10 border border-red-900/20 mb-2">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span class="font-bold">Admin Panel</span>
+                </button>
+                <button onclick="showPage('chat')" id="nav-chat" class="nav-link active w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
+                    <i class="fas fa-comment-alt w-5"></i>
+                    <span class="font-medium" data-i18n="nav_chat">Current Chat</span>
+                </button>
+                <button onclick="showPage('about')" id="nav-about" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="font-medium" data-i18n="nav_about">About Me</span>
+                </button>
+                <button onclick="showPage('privacy')" id="nav-privacy" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span class="font-medium" data-i18n="nav_privacy">Privacy Policy</span>
+                </button>
+                <button onclick="showPage('contact')" id="nav-contact" class="nav-link w-full flex items-center space-x-3 p-3 rounded-xl transition-all btn-smokey text-slate-400 mb-2">
+                    <i class="fas fa-envelope w-5"></i>
+                    <span class="font-medium" data-i18n="nav_contact">Contact Us</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="p-6 border-t border-theme space-y-4">
+            <!-- Theme Switcher -->
+            <div class="flex justify-between items-center bg-black/20 p-2 rounded-xl">
+                <button onclick="setTheme('slate')" class="w-6 h-6 rounded-full bg-slate-800 border border-slate-600" title="Slate"></button>
+                <button onclick="setTheme('zinc')" class="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-600" title="Zinc"></button>
+                <button onclick="setTheme('blue')" class="w-6 h-6 rounded-full bg-blue-900 border border-blue-700" title="Blue"></button>
+                <button onclick="setTheme('rose')" class="w-6 h-6 rounded-full bg-rose-900 border border-rose-700" title="Rose"></button>
+            </div>
+            <div class="flex items-center space-x-3 p-2">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-theme">
+                    <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Amit%20meena.jpg" alt="Amit" class="w-full h-full object-cover">
+                </div>
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Amit Meena</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="app-main" class="main-content hidden flex-1 flex flex-col relative h-full">
+        
+        <!-- Admin Dashboard Page -->
+        <div id="page-admin" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold text-white neon-text">Admin Command Center</h1>
+                        <p class="text-slate-400">System Control & User Management</p>
+                    </div>
+                    <div class="bg-red-900/20 border border-red-500/30 px-4 py-2 rounded-lg animate-pulse">
+                        <span class="text-red-400 font-bold tracking-widest text-xs uppercase"><i class="fas fa-shield-alt mr-2"></i>Secure Mode</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- User Database Card -->
+                    <div class="p-6 glass-morphism rounded-3xl border border-theme hover:bg-white/5 transition-all">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400">
+                                <i class="fas fa-users-cog text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white">User Database</h3>
+                                <p class="text-xs text-slate-400">Export registered user records</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-300 mb-6">
+                            Securely download the full list of signed-up users, including names, emails, and profile photo data. 
+                            <span class="text-red-400 font-bold block mt-2"><i class="fas fa-lock mr-1"></i> Biometric Auth Required</span>
+                        </p>
+                        <button onclick="verifyBiometric()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition-all btn-smokey">
+                            <i class="fas fa-fingerprint mr-2"></i> Unlock & Download
+                        </button>
+                    </div>
+
+                    <!-- System Stats Card -->
+                    <div class="p-6 glass-morphism rounded-3xl border border-theme hover:bg-white/5 transition-all">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-600/20 flex items-center justify-center text-purple-400">
+                                <i class="fas fa-server text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white">System Status</h3>
+                                <p class="text-xs text-slate-400">Live operation metrics</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center bg-black/20 p-3 rounded-lg">
+                                <span class="text-sm text-slate-400">API Status</span>
+                                <span class="text-xs font-bold text-green-400 px-2 py-1 bg-green-900/20 rounded">ONLINE</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-black/20 p-3 rounded-lg">
+                                <span class="text-sm text-slate-400">Security Protocol</span>
+                                <span class="text-xs font-bold text-blue-400 px-2 py-1 bg-blue-900/20 rounded">ACTIVE</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-black/20 p-3 rounded-lg">
+                                <span class="text-sm text-slate-400">Database Encryption</span>
+                                <span class="text-xs font-bold text-purple-400 px-2 py-1 bg-purple-900/20 rounded">AES-256</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin User List Table -->
+                <div class="p-6 glass-morphism rounded-3xl border border-theme">
+                    <h3 class="font-bold text-white mb-4">Live User Registry</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-slate-400 uppercase tracking-widest border-b border-theme">
+                                    <th class="p-3">User</th>
+                                    <th class="p-3">Email</th>
+                                    <th class="p-3">Role</th>
+                                    <th class="p-3">Password (Encrypted)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-user-list" class="text-sm text-slate-300">
+                                <!-- JS Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Studio Page -->
+        <div id="page-code-studio" class="page-content hidden flex-col h-full p-4 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold neon-text" data-i18n="code_studio">Code Studio</h2>
+                <div class="flex space-x-2">
+                    <button onclick="runCode()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all btn-smokey">
+                        <i class="fas fa-play mr-2"></i> <span data-i18n="run_code">Run</span>
+                    </button>
+                    <button onclick="showPage('chat')" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-all btn-smokey">
+                        <i class="fas fa-times mr-2"></i> <span data-i18n="close">Close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
+                <!-- Editor -->
+                <div class="flex-1 flex flex-col glass-morphism rounded-xl border border-theme overflow-hidden">
+                    <div class="bg-black/40 p-2 text-xs text-slate-400 font-mono border-b border-white/5">HTML / CSS / JS</div>
+                    <textarea id="code-editor" class="flex-1 bg-transparent p-4 font-mono text-sm text-blue-300 focus:outline-none resize-none" spellcheck="false" placeholder="// Write your code here..."></textarea>
+                </div>
+                <!-- Preview -->
+                <div class="flex-1 flex flex-col glass-morphism rounded-xl border border-theme overflow-hidden bg-white">
+                    <div class="bg-slate-900 p-2 text-xs text-slate-400 font-mono border-b border-slate-200">Live Preview</div>
+                    <iframe id="code-preview" class="flex-1 w-full h-full bg-white"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="page-chat" class="page-content flex flex-col h-full">
+            <header class="p-4 border-b border-theme flex justify-between items-center glass-morphism z-20">
+                <div class="flex items-center space-x-3">
+                    <h2 id="current-chat-title" class="font-semibold text-sm neon-text">New Chat</h2>
+                    <button onclick="renameCurrentChat()" class="text-slate-500 hover:text-white text-xs btn-smokey p-2 rounded-lg">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex bg-slate-800 rounded-lg p-1 border border-theme glass-morphism">
+                        <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 text-[10px] rounded-md transition-all bg-blue-600 text-white font-bold uppercase tracking-wider btn-smokey">EN</button>
+                        <button onclick="setLanguage('hi')" id="lang-hi" class="px-3 py-1 text-[10px] rounded-md transition-all text-slate-400 font-bold uppercase tracking-wider hover:bg-slate-700">HI</button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-xs text-slate-400" data-i18n="system_ready">System Ready</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar scroll-smooth">
+                <!-- Messages will be injected here -->
+            </div>
+            
+            <!-- Camera Container (Initially Hidden) -->
+            <div id="camera-container" class="hidden absolute top-20 right-4 w-48 md:w-64 glass-morphism rounded-2xl overflow-hidden shadow-2xl border border-blue-500/30 z-30 transition-all duration-300">
+                <div class="relative">
+                    <video id="camera-feed" autoplay playsinline class="w-full h-auto object-cover"></video>
+                    <canvas id="camera-canvas" class="hidden"></canvas>
+                    <div class="absolute top-2 right-2 flex space-x-2">
+                         <span class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded animate-pulse">LIVE</span>
+                         <button id="close-camera" class="w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                        <p class="text-[10px] text-center text-white font-medium">Ask me about this view!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="input-container px-4 md:px-8">
+                <div class="input-blur"></div>
+                <div class="max-w-3xl mx-auto relative z-10">
+                    <form id="chat-form" class="relative group">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 z-20">
+                            <button type="button" id="voice-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2 btn-smokey rounded-lg" title="Voice Chat">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button type="button" id="camera-btn" class="text-slate-500 hover:text-blue-500 transition-all p-2 btn-smokey rounded-lg" title="Live Camera">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            <button type="button" id="screen-btn" onclick="startScreenShare()" class="text-slate-500 hover:text-purple-500 transition-all p-2 btn-smokey rounded-lg" title="Share Screen">
+                                <i class="fas fa-desktop"></i>
+                            </button>
+                            <label for="file-upload" class="text-slate-500 hover:text-blue-500 transition-all p-2 cursor-pointer btn-smokey rounded-lg ml-1" title="Upload File (Image/PDF)">
+                                <i class="fas fa-paperclip"></i>
+                                <input type="file" id="file-upload" accept="image/*,application/pdf,.txt" class="hidden">
+                            </label>
+                        </div>
+                        <input type="text" id="user-input" autocomplete="off"
+                            placeholder="Ask Amit AI anything..."
+                            data-i18n-placeholder="input_placeholder"
+                            class="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-2xl py-4 pl-36 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all text-slate-100 shadow-2xl relative z-10 glass-morphism placeholder-slate-500">
+                        <button type="submit" 
+                            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 z-20 btn-smokey">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </form>
+                    <p class="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-tighter neon-text" data-i18n="footer">Powered by GPT-4o Mini • Amit Meena AI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Page -->
+        <div id="page-about" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-12">
+                <div class="text-center space-y-4 anim-float">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight neon-text">About Me</h1>
+                    <p class="text-slate-400 text-lg">Developer, Creator & AI Enthusiast</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Personal Profile</h3>
+                            <p class="text-slate-300 leading-relaxed">
+                                Namaste! Main Amit Meena hoon. I'm a passionate developer focused on building modern web experiences and AI integrations. 
+                                Based in Jaipur, Karauli, India.
+                            </p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Amit%20meena.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-lg transform hover:scale-105 transition-transform" alt="Amit Meena">
+                                <img src="https://raw.githubusercontent.com/TulsiMeena/Photo-/main/Amit%20tatu.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-lg transform hover:scale-105 transition-transform" alt="Amit Tatu">
+                            </div>
+                        </div>
+
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Technical 01</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">
+                                <span class="text-blue-400 font-bold">Technical 01</span> ek aesa channel hai jahan Amazon ke latest projects aur deals ki links directly WhatsApp channel pe milti hain. Isse <span class="text-white font-medium">Aman Meena</span> run karte hain, aur unke brother <span class="text-white font-medium">Amit Meena</span> (Developer) is platform ko support karte hain.
+                            </p>
+                            <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Technical_01.jpg" class="w-full h-40 object-cover rounded-2xl border border-theme shadow-md" alt="Technical 01">
+                        </div>
+
+                        <!-- Community Section -->
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Community Members</h3>
+                            <div id="community-section" class="grid grid-cols-3 gap-3">
+                                <!-- Members injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Lifestyle</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman1.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 1">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/aman3.jpg" class="w-full h-48 object-cover rounded-2xl border border-theme shadow-md" alt="Aman 3">
+                            </div>
+                            <p class="text-sm text-slate-400">Capturing moments and exploring new technologies every day.</p>
+                        </div>
+
+                        <div class="p-6 glass-morphism rounded-3xl border border-theme space-y-4 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Quick Links</h3>
+                            <div class="flex gap-4">
+                                <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="flex-1 p-4 glass-morphism rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-pink-600/20 transition-all btn-smokey">
+                                    <i class="fab fa-instagram text-2xl text-pink-500 mb-2"></i>
+                                    <span class="text-xs font-bold uppercase tracking-widest">Follow</span>
+                                </a>
+                                <a href="https://whatsapp.com/channel/0029VaDFCbF9hXFDBUx8fe3E" target="_blank" class="flex-1 p-4 glass-morphism rounded-2xl border border-theme flex flex-col items-center justify-center hover:bg-green-600/20 transition-all btn-smokey">
+                                    <i class="fab fa-whatsapp text-2xl text-green-500 mb-2"></i>
+                                    <span class="text-xs font-bold uppercase tracking-widest">Join</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="page-contact" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-12">
+                <div class="text-center space-y-4 anim-float">
+                    <h1 class="text-5xl font-extrabold text-white tracking-tight neon-text">Contact Us</h1>
+                    <p class="text-slate-400 text-lg">Let's connect and build something great together.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Contact Info -->
+                    <div class="space-y-6">
+                        <div class="p-8 glass-morphism rounded-3xl border border-theme space-y-8 hover:bg-white/5 transition-all">
+                            <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Direct Channels</h3>
+                            
+                            <div class="space-y-6">
+                                <a href="tel:8696434884" class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all btn-smokey">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Call Me</p>
+                                        <p class="text-slate-200 font-medium">+91 8696434884</p>
+                                    </div>
+                                </a>
+
+                                <a href="mailto:Xemoh1950t@proton.me" class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all btn-smokey">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Email Me</p>
+                                        <p class="text-slate-200 font-medium">Xemoh1950t@proton.me</p>
+                                    </div>
+                                </a>
+
+                                <div class="group flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                                        <i class="fas fa-location-dot"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Location</p>
+                                        <p class="text-slate-200 font-medium">Jaipur, Karauli, India</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instagram Specific -->
+                        <div class="p-8 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-3xl border border-pink-500/20 space-y-6 glass-morphism">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs uppercase tracking-widest text-pink-400 font-bold">Instagram Feed</h3>
+                                <i class="fab fa-instagram text-2xl text-pink-500"></i>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <img src="https://raw.githubusercontent.com/Amitmeena55/Aman-Meena-/main/Aman.jpg" class="w-16 h-16 rounded-2xl object-cover border-2 border-pink-500" alt="Instagram Profile">
+                                <div>
+                                    <p class="text-white font-bold">@_technical_01</p>
+                                    <p class="text-xs text-slate-400">Digital Creator & Developer</p>
+                                </div>
+                            </div>
+                            <a href="https://www.instagram.com/_technical_01?igsh=MTdydjJkbWl3Y3ppeg==" target="_blank" class="block w-full py-4 bg-pink-600 text-white rounded-2xl text-center font-bold shadow-lg shadow-pink-900/40 hover:bg-pink-500 transition-all btn-smokey">
+                                Follow on Instagram
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Contact Form Mock -->
+                    <div class="p-8 glass-morphism rounded-3xl border border-theme space-y-6 hover:bg-white/5 transition-all">
+                        <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Send a Message</h3>
+                        <form class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Full Name</label>
+                                <input type="text" placeholder="John Doe" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Email Address</label>
+                                <input type="email" placeholder="john@example.com" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 tracking-widest px-1">Message</label>
+                                <textarea rows="4" placeholder="How can I help you?" class="w-full bg-slate-800 border border-theme rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-all glass-morphism"></textarea>
+                            </div>
+                            <button type="button" onclick="alert('Message sent! (Simulation)')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all btn-smokey">
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Page -->
+        <div id="page-privacy" class="page-content hidden flex-1 overflow-y-auto p-8 md:p-16">
+            <div class="max-w-3xl mx-auto space-y-8">
+                <h1 class="text-4xl font-bold text-white neon-text anim-float">Privacy Policy</h1>
+                <div class="space-y-6 text-slate-400 glass-morphism p-8 rounded-3xl border border-theme">
+                    <p>Your privacy is important to us. Here's how we handle your data:</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Data Collection:</span> We only collect messages to provide AI responses.</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Storage:</span> We do not store your personal identity data.</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <p><span class="text-slate-200 font-medium">Third Parties:</span> Data is sent securely to ChatAnywhere API.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js?v=2"></script>
+</body>
+</html>
