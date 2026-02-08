@@ -1,0 +1,21 @@
+{
+    "name": "Technical AI",
+    "short_name": "TechnicalAI",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#020617",
+    "theme_color": "#020617",
+    "description": "Ultra Advanced AI Assistant by Amit Meena",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/4712/4712035.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/4712/4712035.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
