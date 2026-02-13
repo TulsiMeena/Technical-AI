@@ -3,7 +3,8 @@
 const CONFIG = {
     API_KEY: "sk-mSwKeMe2E4FqmPTVsCoZ7Keo0P8lL3FhtSy2CpHHLSqDz3YL",
     BASE_URL: "https://api.chatanywhere.tech/v1/chat/completions",
-    MODEL: "gpt-4o-mini"
+    MODEL: "gpt-4o-mini", // Optimized for Speed ("Feast") & Intelligence
+    FALLBACK_MODEL: "gpt-3.5-turbo"
 };
 
 // --- State Management ---
@@ -771,10 +772,39 @@ async function fetchAIResponse(message, imageBase64 = null) {
             })
         });
         const data = await response.json();
-        return data.choices[0].message.content;
+        if (data.choices && data.choices[0]) {
+            return data.choices[0].message.content;
+        } else {
+            throw new Error("Invalid API Response");
+        }
     } catch (error) {
-        console.error("API Error:", error);
-        return "Sorry, connection error. Please try again.";
+        console.error("API Error (Primary):", error);
+
+        // Fallback Mechanism
+        if (CONFIG.MODEL !== CONFIG.FALLBACK_MODEL) {
+            console.log("Retrying with Fallback Model...");
+            try {
+                const fbResponse = await fetch(CONFIG.BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${CONFIG.API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: CONFIG.FALLBACK_MODEL,
+                        messages: [
+                            { role: "user", content: message } // Simple fallback
+                        ]
+                    })
+                });
+                const fbData = await fbResponse.json();
+                return fbData.choices[0].message.content + "\n\n(Generated via Backup Model)";
+            } catch (fbError) {
+                console.error("Fallback Failed:", fbError);
+            }
+        }
+
+        return "Sorry, I am currently overloaded. Please try again in a moment.";
     }
 }
 

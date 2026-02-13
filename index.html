@@ -2,7 +2,7 @@
 <html lang="en">
 <head><meta name="google-site-verification" content="in3cEbCpL57DyOczdAe1Mia2dTUyhfREuB0tZ5XAgfk" />
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -151,7 +151,7 @@
 <body class="theme-slate text-slate-200 h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 glass-morphism border-b border-theme z-40">
+    <header class="md:hidden flex items-center justify-between p-4 glass-morphism border-b border-theme z-40 pt-[env(safe-area-inset-top)]">
         <div class="flex items-center space-x-2">
             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <i class="fas fa-robot text-white text-sm"></i>
@@ -276,7 +276,7 @@
     </div>
 
     <!-- Sidebar -->
-    <aside id="app-sidebar" class="sidebar hidden md:flex w-full md:w-72 border-r flex-col shrink-0 glass-morphism z-50 fixed md:relative inset-0 md:inset-auto h-full bg-slate-900/95 md:bg-transparent backdrop-blur-xl md:backdrop-filter-none">
+    <aside id="app-sidebar" class="sidebar hidden md:flex w-full md:w-72 border-r flex-col shrink-0 glass-morphism z-50 fixed md:relative inset-0 md:inset-auto h-full bg-slate-900/95 md:bg-transparent backdrop-blur-xl md:backdrop-filter-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div class="p-6 border-b border-theme flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 anim-float">
